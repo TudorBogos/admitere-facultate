@@ -149,11 +149,6 @@ public class DataBase_UI_Admin extends JPanel {
                         JOptionPane.INFORMATION_MESSAGE);
                 selectTableStudent();
                 clearFields();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Eroare la ștergere student: ID-ul trebuie să fie un număr valid",
-                        "Eroare",
-                        JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this,
                         "Eroare la ștergere student: " + ex.getMessage(),
@@ -167,6 +162,14 @@ public class DataBase_UI_Admin extends JPanel {
             if(verifyEmptyView()){
                 selectTableStudent();
             }else{
+                try {
+                    filterTableStudent(validID(), numeField.getText(), prenumeField.getText(), validCNP(), validNota());
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this,
+                            "Eroare la ștergere student: " + ex.getMessage(),
+                            "Eroare",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
 
@@ -178,8 +181,16 @@ public class DataBase_UI_Admin extends JPanel {
 
 
     /// Functie pentru validarea ID-ului
-    public int validID(){
-        return idField.getText().isEmpty() ? 0 : Integer.parseInt(idField.getText());
+    public int validID() throws Exception {
+        String idText = idField.getText();
+        if (idText.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(idText);
+        } catch (NumberFormatException e) {
+            throw new Exception("ID-ul trebuie să fie un număr valid");
+        }
     }
 
     /// Functie pentru validarea CNP-ului
@@ -197,8 +208,20 @@ public class DataBase_UI_Admin extends JPanel {
     }
 
     /// Functie pentru validarea notei
-    public float validNota(){
-         return notaField.getText().isEmpty() ? 0f : Float.parseFloat(notaField.getText());
+    public float validNota() throws Exception {
+        String notaText = notaField.getText();
+        if (notaText.isEmpty()) {
+            return 0f;
+        }
+        try {
+            float nota = Float.parseFloat(notaText);
+            if (nota < 0 || nota > 10) {
+                throw new Exception("Nota trebuie să fie între 0 și 10");
+            }
+            return nota;
+        } catch (NumberFormatException e) {
+            throw new Exception("Nota trebuie să fie un număr valid");
+        }
     }
 
     /// Verifies that the fields are empty for insert. Returns true if any of the fields are empty
