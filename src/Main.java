@@ -3,7 +3,7 @@ import java.awt.*;
 
 public class Main {
     public static void main(String[] args) {
-       SwingUtilities.invokeLater(() -> {
+       /*SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Student Management System");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -26,14 +26,14 @@ public class Main {
 
             // Give the auth panel access to the CardLayout for switching
             authPanel.setMainPanel(mainPanel);
-        });
-        /*SwingUtilities.invokeLater(() -> {
+        });*/
+        SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Student Management System");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.add(new DataBase_UI_Admin());
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-        });*/
+        });
     }
 }

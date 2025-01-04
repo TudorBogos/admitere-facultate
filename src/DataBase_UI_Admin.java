@@ -43,7 +43,7 @@ public class DataBase_UI_Admin extends JPanel {
         JButton insertButton = new JButton("Insert");
         JButton updateButton = new JButton("Update");
         JButton deleteButton = new JButton("Delete");
-        JButton viewButton = new JButton("Refresh tabela studenti");
+        JButton viewButton = new JButton("Filter/Update tabela studenti");
         JButton clearButton = new JButton("Clear field-uri");
 
         buttonPanel.add(insertButton);
@@ -59,6 +59,7 @@ public class DataBase_UI_Admin extends JPanel {
         String[] columnNames = {"ID", "Nume", "Prenume", "CNP", "Nota"};
         tableModel = new DefaultTableModel(columnNames, 0);
         table = new JTable(tableModel);
+        table.setEnabled(false);
         JScrollPane scrollPane = new JScrollPane(table);
         JPanel tablePanel = new JPanel(new GridBagLayout());
         tablePanel.add(scrollPane);
@@ -71,35 +72,13 @@ public class DataBase_UI_Admin extends JPanel {
         add(tablePanel, BorderLayout.SOUTH);
 
 
-        /// Functie de insert
+        /// Buton insert
         insertButton.addActionListener(e -> {
-            float nota;
 
             //Verificare campuri goale
             if(verifyEmptyInsert()){
                 JOptionPane.showMessageDialog(this,
-                        "Trebuie să fie toate câmpurile completate pentru a adăuga un student nou.",
-                        "Eroare",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // Validare nota
-            try {
-                nota = validNota();
-
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Introduceți o notă validă",
-                        "Eroare Input",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // Validare CNP
-            if(!validCNP()){
-                JOptionPane.showMessageDialog(this,
-                        "Introduceți un CNP valid",
+                        "Trebuie să fie toate câmpurile completate pentru a adăuga un student nou. (Fară ID)",
                         "Eroare",
                         JOptionPane.ERROR_MESSAGE);
                 return;
@@ -110,15 +89,15 @@ public class DataBase_UI_Admin extends JPanel {
                 int rowsAffected = DatabaseManager.insertStudent(
                         numeField.getText(),
                         prenumeField.getText(),
-                        cnpField.getText(),
-                        nota
+                        validCNP(),
+                        validNota()
                 );
 
                 JOptionPane.showMessageDialog(this,
                         "S-au inserat " + rowsAffected + " rânduri",
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
-                refreshTableStudent();
+                selectTableStudent();
                 clearFields();
 
             } catch (Exception ex) {
@@ -129,87 +108,50 @@ public class DataBase_UI_Admin extends JPanel {
             }
         });
 
+        /// Buton update
         updateButton.addActionListener(e -> {
-            float nota;
-            int id;
-            // Validam ID-ul
-            try {
-                id = validID();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Introduceți un id valid",
-                        "Eroare Input",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // Validam CNP-ul
-            if(!validCNP() && !cnpField.getText().isEmpty()){
-                JOptionPane.showMessageDialog(this,
-                        "Introduceți un CNP valid",
-                        "Eroare",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            //Validam nota
-            try {
-                nota = validNota();
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this,
-                        "Introduceți o notă validă",
-                        "Eroare Input",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
 
             // Finally do the update
             try {
                 int rowsAffected = DatabaseManager.updateStudent(
-                        id,
+                        validID(),
                         numeField.getText(),
                         prenumeField.getText(),
-                        cnpField.getText(),
-                        nota
+                        validCNP(),
+                        validNota()
                 );
 
                 JOptionPane.showMessageDialog(this,
                         "S-au actualizat " + rowsAffected + " rânduri",
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
-                refreshTableStudent();
+                selectTableStudent();
                 clearFields();
 
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this,
-                        "Eroare la actualizare student. " + ex.getMessage(),
+                        "Eroare la actualizare student: " + ex.getMessage(),
                         "Eroare",
                         JOptionPane.ERROR_MESSAGE);
             }
         });
 
+
+        /// Buton delete
         deleteButton.addActionListener(e -> {
-            if (idField.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                        "Introduceți un ID",
-                        "Eroare",
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
 
             try {
-                int id = Integer.parseInt(idField.getText());
-                int rowsAffected = DatabaseManager.deleteStudent(id);
+                int rowsAffected = DatabaseManager.deleteStudent(validID());
 
                 JOptionPane.showMessageDialog(this,
                         "S-au șters " + rowsAffected + " rânduri",
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
-                refreshTableStudent();
+                selectTableStudent();
                 clearFields();
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this,
-                        "ID-ul trebuie să fie un număr",
+                        "Eroare la ștergere student: ID-ul trebuie să fie un număr valid",
                         "Eroare",
                         JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
@@ -220,33 +162,38 @@ public class DataBase_UI_Admin extends JPanel {
             }
         });
 
-        viewButton.addActionListener(e -> refreshTableStudent());
+        /// Buton view
+        viewButton.addActionListener(e -> {
+            if(verifyEmptyView()){
+                selectTableStudent();
+            }else{
+            }
+        });
 
         clearButton.addActionListener(e -> clearFields());
 
         //Function to make the table visible at initialization
-        refreshTableStudent();
+        selectTableStudent();
     }
 
 
     /// Functie pentru validarea ID-ului
-
     public int validID(){
         return idField.getText().isEmpty() ? 0 : Integer.parseInt(idField.getText());
     }
 
     /// Functie pentru validarea CNP-ului
-    public boolean validCNP(){
+    public String validCNP() throws Exception{
         String cnp = cnpField.getText();
         if(cnp.length() != 13){
-            return false;
+            throw new Exception("CNP-ul trebuie să aibă 13 cifre sau sa fie gol");
         }
         for(int i = 0; i < cnp.length(); i++){
             if(!Character.isDigit(cnp.charAt(i))){
-                return false;
+                throw new Exception("CNP-ul trebuie să conțină doar cifre");
             }
         }
-        return true;
+        return cnp;
     }
 
     /// Functie pentru validarea notei
@@ -254,14 +201,54 @@ public class DataBase_UI_Admin extends JPanel {
          return notaField.getText().isEmpty() ? 0f : Float.parseFloat(notaField.getText());
     }
 
-    /// Verifies that the fields are empty
+    /// Verifies that the fields are empty for insert. Returns true if any of the fields are empty
     public boolean verifyEmptyInsert(){
         return numeField.getText().isEmpty() || prenumeField.getText().isEmpty() || cnpField.getText().isEmpty() || notaField.getText().isEmpty();
     }
+    /// Verifies that the fields are empty for viewButton. Returns true if all of the fields are empty
+    public boolean verifyEmptyView(){
+        return idField.getText().isEmpty() && numeField.getText().isEmpty() && prenumeField.getText().isEmpty() && cnpField.getText().isEmpty() && notaField.getText().isEmpty();
+    }
 
-    public void refreshTableStudent() {
+    public void selectTableStudent() {
         try {
             ResultSet rs = DatabaseManager.selectAllStudents();
+            tableModel.setRowCount(0);
+
+            while (rs.next()) {
+                Object[] row = {
+                        rs.getInt("idStudent"),
+                        rs.getString("Nume"),
+                        rs.getString("Prenume"),
+                        rs.getString("CNP"),
+                        rs.getFloat("Nota")
+                };
+                tableModel.addRow(row);
+            }
+
+            autoResizeColumns();
+            table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+            rs.close();
+            DatabaseManager.closeConnection();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Eroare la reîmprospătare tabel.\n " + e.getMessage(),
+                    "Eroare",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /// Functie de filtrare a tabelului
+    public void filterTableStudent() {
+        try {
+            ResultSet rs = DatabaseManager.filterStudents(
+                    validID(),
+                    numeField.getText(),
+                    prenumeField.getText(),
+                    validCNP(),
+                    validNota()
+            );
             tableModel.setRowCount(0);
 
             while (rs.next()) {

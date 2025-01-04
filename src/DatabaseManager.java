@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Objects;
 
 public class DatabaseManager extends JOptionPane {
     private static final String URL = "jdbc:mysql://localhost:3306/admitere_facultate";
@@ -17,8 +16,8 @@ public class DatabaseManager extends JOptionPane {
                 System.out.println("Database connection established");
             }
             return connection;
-        } catch (SQLException e) {
-            System.out.println("Error connecting to database: " + e.getMessage());
+        } catch (SQLException ex) {
+            System.out.println("Error connecting to database: " + ex.getMessage());
             return null;
         }
     }
@@ -30,8 +29,8 @@ public class DatabaseManager extends JOptionPane {
                 connection.close();
                 System.out.println("Database connection closed");
             }
-        } catch (SQLException e) {
-            System.out.println("Error closing connection: " + e.getMessage());
+        } catch (SQLException ex) {
+            System.out.println("Error closing connection: " + ex.getMessage());
         }
     }
 
@@ -43,25 +42,68 @@ public class DatabaseManager extends JOptionPane {
                 Statement stmt = conn.createStatement();
                 return stmt.executeQuery("SELECT * FROM Student");
             }
-        } catch (SQLException e) {
-            System.out.println("Error querying students: " + e.getMessage());
+        } catch (SQLException ex) {
+            System.out.println("Eroare selectAllStudents: " + ex.getMessage());
         }
         return null;
     }
 
-    /// Functie delete cu try-with-resources
-    public static int deleteStudent(int id) {
-        StringBuilder sql = new StringBuilder("DELETE FROM STUDENT WHERE ID=?");
-        int rowsAffected = 0;
-        try (Connection conn = openConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
-            pstmt.setInt(1, id);
-            rowsAffected = pstmt.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return rowsAffected;
+    /// Functie pentru selectarea unui student dupa campurile completate
+    public static ResultSet filterStudents(int id, String nume, String prenume, String cnp, float nota) {
+        StringBuilder sql = new StringBuilder("SELECT * FROM Student WHERE ");
+        ArrayList<String> filters = new ArrayList<>();
+        ArrayList<Object> values = new ArrayList<>();
 
+        // Add non-empty fields to the filter
+        if (id != 0) {
+            filters.add("idStudent=?");
+            values.add(id);
+        }
+
+        if (!nume.isEmpty()) {
+            filters.add("Nume=?");
+            values.add(nume);
+        }
+        if (!prenume.isEmpty()) {
+            filters.add("Prenume=?");
+            values.add(prenume);
+        }
+        if (!cnp.isEmpty()) {
+            filters.add("CNP=?");
+            values.add(cnp);
+        }
+
+        if (nota != 0f) {
+            filters.add("Nota=?");
+            values.add(nota);
+        }
+
+        // If nothing to filter, return
+        if (filters.isEmpty()) {
+            return null;
+        }
+
+        // Build the query
+        sql.append(String.join(" AND ", filters));
+
+        //for debugging purposes
+        System.out.println(sql.toString());
+
+        try {
+            Connection conn = openConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql.toString());
+
+            int paramIndex = 1;
+            for (Object value : values) {
+                pstmt.setObject(paramIndex++, value);
+            }
+
+            return pstmt.executeQuery();
+
+        } catch (SQLException ex) {
+            System.out.println("Eroare filterStudents: " + ex.getMessage());
+        }
+        return null;
     }
 
     /// Functie insert cu try-with-resources
@@ -115,8 +157,8 @@ public class DatabaseManager extends JOptionPane {
 
             rowsAffected = pstmt.executeUpdate();
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            System.out.println("Eroare insertStudent: " + ex.getMessage());
         }
         return rowsAffected;
     }
@@ -157,6 +199,9 @@ public class DatabaseManager extends JOptionPane {
         sql.append(String.join(", ", updates));
         sql.append(" WHERE idStudent=?");
 
+        // for debugging purposes
+        System.out.println(sql.toString());
+
         try (Connection conn = openConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
 
@@ -170,10 +215,25 @@ public class DatabaseManager extends JOptionPane {
 
             rowsAffected = pstmt.executeUpdate();
 
-        } catch (SQLException e) {
-            e.printStackTrace();
+        } catch (SQLException ex) {
+            System.out.println("Eroare updateStudent: " + ex.getMessage());
         }
         return rowsAffected;
+    }
+
+    /// Functie delete cu try-with-resources
+    public static int deleteStudent(int id) {
+        StringBuilder sql = new StringBuilder("DELETE FROM STUDENT WHERE ID=?");
+        int rowsAffected = 0;
+        try (Connection conn = openConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
+            pstmt.setInt(1, id);
+            rowsAffected = pstmt.executeUpdate();
+        } catch (SQLException ex) {
+            System.out.println("Eroare deleteStudent: " + ex.getMessage());
+        }
+        return rowsAffected;
+
     }
 
     /// Functie de authenticare a adminului cu try-with-resources
@@ -182,7 +242,7 @@ public class DatabaseManager extends JOptionPane {
         String sql = "SELECT * FROM authentication WHERE username=? AND password=?";
         boolean adminExists = false;
 
-        try (Connection conn = DatabaseManager.openConnection();  // Use DatabaseManager's connection
+        try (Connection conn = DatabaseManager.openConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             // Set both the username and password parameters
@@ -194,8 +254,8 @@ public class DatabaseManager extends JOptionPane {
             adminExists = rs.next(); // Will be true if we found a matching admin
 
             rs.close();  // Clean up our ResultSet
-        } catch (SQLException e) {
-            System.out.println("Eroare la autentificarea adminului: " + e.getMessage());
+        } catch (SQLException ex) {
+            System.out.println("Eroare authenticateAdmin: " + ex.getMessage());
         }
 
         return adminExists;
@@ -226,7 +286,7 @@ public class DatabaseManager extends JOptionPane {
                 }
             }
             closeConnection();
-        } catch (SQLException e) {
-            System.out.println("Error querying students: " + e.getMessage());
+        } catch (SQLException ex) {
+            System.out.println("Error querying students: " + ex.getMessage());
         }
     }*/
