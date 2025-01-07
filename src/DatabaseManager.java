@@ -74,6 +74,9 @@ public class DatabaseManager extends JOptionPane {
         FROM admitere_status a
         JOIN student s ON a.idStudent = s.idStudent
         JOIN facultate f ON a.idFacultate = f.idFacultate
+        ORDER BY f.Nume_Facultate ASC, 
+                 a.status ASC, 
+                 s.Nota DESC;
     """;
 
         try {
@@ -180,6 +183,9 @@ public class DatabaseManager extends JOptionPane {
         }
 
         if (!optiune.isEmpty()) {
+            int idFacultateOptiune = getFacultateIdByName(optiune.trim());
+            inserts.add("idFacultateOptiune");
+            values.add(idFacultateOptiune);
             inserts.add("Optiune");
             values.add(optiune.trim());
         }
@@ -300,6 +306,39 @@ public class DatabaseManager extends JOptionPane {
 
     }
 
+    /// Functie care updateaza admitere_status cu admis/respins automat bazat pe nr de locuri
+    public static void updateAdmitereStatus() {
+        String sql =
+                "UPDATE admitere_status a " +
+                        "JOIN (" +
+                        "    SELECT " +
+                        "        a.idStudent, " +
+                        "        a.idFacultate, " +
+                        "        IF(" +
+                        "            RANK() OVER (PARTITION BY a.idFacultate ORDER BY s.Nota DESC) <= f.numar_locuri, " +
+                        "            'admis', " +
+                        "            'respins'" +
+                        "        ) AS new_status " +
+                        "    FROM admitere_status a " +
+                        "    JOIN facultate f ON a.idFacultate = f.idFacultate " +
+                        "    JOIN student s ON a.idStudent = s.idStudent " +
+                        ") ranked_status " +
+                        "ON a.idStudent = ranked_status.idStudent AND a.idFacultate = ranked_status.idFacultate " +
+                        "SET a.status = ranked_status.new_status;";
+
+        try (Connection conn = openConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            // Execute the query
+            int updatedRows = pstmt.executeUpdate();
+            System.out.println(updatedRows + " rows updated in admitere_status.");
+
+        } catch (SQLException ex) {
+            System.out.println("Eroare updateAdmitereStatus: " + ex.getMessage());
+        }
+    }
+
+    /// Compară opțiunea completată pentru inserare cu tabelul Facultate. Returnează adevărat dacă există un rând returnat.
     public static boolean compareOptiuneFacultate(String optiune){
         String sql="SELECT Nume_Facultate FROM Facultate WHERE Nume_Facultate in (Select Optiune from Student where Optiune=?)";
         try(Connection conn=openConnection();){
@@ -313,32 +352,56 @@ public class DatabaseManager extends JOptionPane {
         return false;
     }
 
+    /// Funcție pentru obținerea automată a ID-ului la introducere.
+    public static int getFacultateIdByName(String facultateName){
+        String sql = "SELECT idFacultate FROM facultate WHERE Nume_Facultate = ?";
+        try (Connection conn = openConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, facultateName);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("idFacultate");
+            }
+        }catch (SQLException ex) {
+            System.out.println("Eroare getFacultateIdByName: " + ex.getMessage());
+        }
+        return 0;
+    }
+
+
+
+
     /// Functie de authenticare a adminului cu try-with-resources
     public static boolean authenticateAdmin(String username, String password) {
-        // Updated SQL query to match your table structure
-        String sql = "SELECT * FROM authentication WHERE username=? AND password=?";
-        boolean adminExists = false;
-
+        String sql1 = "SELECT 1 FROM admin WHERE username=? AND password=?";
+        String sql2 = "UPDATE admin SET last_login=CURRENT_TIMESTAMP WHERE username=?";
         try (Connection conn = DatabaseManager.openConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+             PreparedStatement pstmt1 = conn.prepareStatement(sql1);
+             PreparedStatement pstmt2 = conn.prepareStatement(sql2)) {
 
-            // Set both the username and password parameters
-            pstmt.setString(1, username);
-            pstmt.setString(2, password);
+            pstmt1.setString(1, username);
+            pstmt1.setString(2, password);
+            pstmt2.setString(1, username);
 
-            // Execute the query and check if we found a matching admin
-            ResultSet rs = pstmt.executeQuery();
-            adminExists = rs.next(); // Will be true if we found a matching admin
+            // Execute query and return true if a match is found
+            ResultSet rs = pstmt1.executeQuery();
+            if(rs.next()){
+                pstmt2.executeUpdate();
+                return true;
+            }
 
-            rs.close();  // Clean up our ResultSet
         } catch (SQLException ex) {
             System.out.println("Eroare authenticateAdmin: " + ex.getMessage());
         }
+        return false; // Return false if any error or no match
+    }
 
-        return adminExists;
+
+    /// Functie de autentificare a studentului cu try-with-resources
+    public static boolean authenticateStudent(String Nume, String Prenume, String CNP) {
+        return false;
     }
 }
-
 
 
 

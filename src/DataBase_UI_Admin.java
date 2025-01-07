@@ -62,9 +62,7 @@ public class DataBase_UI_Admin extends JPanel {
         tableModelStudent = new DefaultTableModel(columnNames, 0);
         tableStudent = new JTable(tableModelStudent);
         tableStudent.setEnabled(false);
-        sorter = new TableRowSorter<>(tableModelStudent);
         tableStudent.getTableHeader().setReorderingAllowed(false);
-        tableStudent.setRowSorter(sorter);
         JScrollPane scrollPane = new JScrollPane(tableStudent);
         JPanel tablePanel = new JPanel(new GridBagLayout());
         tablePanel.add(scrollPane);
@@ -137,6 +135,7 @@ public class DataBase_UI_Admin extends JPanel {
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
                 selectTableStudent();
+                DatabaseManager.updateAdmitereStatus();
                 selectTableAdmitereStatus();
                 clearFields();
 
@@ -176,6 +175,7 @@ public class DataBase_UI_Admin extends JPanel {
                         JOptionPane.INFORMATION_MESSAGE);
                 selectTableStudent();
                 selectTableAdmitereStatus();
+                DatabaseManager.updateAdmitereStatus();
                 clearFields();
 
             } catch (Exception ex) {
@@ -206,6 +206,7 @@ public class DataBase_UI_Admin extends JPanel {
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
                 selectTableStudent();
+                DatabaseManager.updateAdmitereStatus();
                 selectTableAdmitereStatus();
                 clearFields();
             } catch (Exception ex) {
@@ -225,7 +226,7 @@ public class DataBase_UI_Admin extends JPanel {
                     filterTableStudent();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this,
-                            "Eroare la filtrarea studentului:\n " + ex.getMessage(),
+                             ex.getMessage(),
                             "Eroare",
                             JOptionPane.ERROR_MESSAGE);
                 }
@@ -239,6 +240,7 @@ public class DataBase_UI_Admin extends JPanel {
         //Function to make the table visible at initialization
         selectTableStudent();
         selectTableFacultate();
+        DatabaseManager.updateAdmitereStatus();
         selectTableAdmitereStatus();
     }
 
@@ -333,7 +335,7 @@ public class DataBase_UI_Admin extends JPanel {
 
 
     /// Functie de filtrare a tabelului
-    public void filterTableStudent() {
+    public void filterTableStudent() throws Exception {
         try {
             ResultSet rs = DatabaseManager.filterStudents(
                     validID(),
@@ -343,9 +345,17 @@ public class DataBase_UI_Admin extends JPanel {
                     validNota(),
                     validOptiune()
             );
+
+            // Check if ResultSet is empty
+            if (rs == null || !rs.next()) {
+                throw new Exception("Nu exista nicio inregistrare cu aceste filtre");
+            }
+
+            // Clear the table
             tableModelStudent.setRowCount(0);
 
-            while (rs.next()) {
+            // Add rows to the table
+            do {
                 Object[] row = {
                         rs.getInt("idStudent"),
                         rs.getString("Nume"),
@@ -355,8 +365,9 @@ public class DataBase_UI_Admin extends JPanel {
                         rs.getString("Optiune")
                 };
                 tableModelStudent.addRow(row);
-            }
+            } while (rs.next());
 
+            // Resize columns
             autoResizeColumns(tableStudent);
             tableStudent.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
@@ -364,11 +375,12 @@ public class DataBase_UI_Admin extends JPanel {
             DatabaseManager.closeConnection();
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
-                    "Eroare la reîmprospătare tabel:\n " + e.getMessage(),
+                    "Eroare la filtrare tabel:\n " + e.getMessage(),
                     "Eroare",
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+
 
     private void clearFields() {
         idField.setText("");

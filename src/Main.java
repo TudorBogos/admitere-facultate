@@ -3,7 +3,7 @@ import java.awt.*;
 
 public class Main {
     public static void main(String[] args) {
-       /*SwingUtilities.invokeLater(() -> {
+        SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Student Management System");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -20,20 +20,26 @@ public class Main {
 
             // Add the main panel to the frame
             frame.add(mainPanel);
-            frame.pack();
-            frame.setLocationRelativeTo(null);
+            frame.pack(); // Automatically size frame to fit the components
+            frame.setMinimumSize(new Dimension(800, 600)); // Optional: Minimum size for the window
+            frame.setLocationRelativeTo(null); // Center the frame on screen
             frame.setVisible(true);
 
             // Give the auth panel access to the CardLayout for switching
             authPanel.setMainPanel(mainPanel);
-        });*/
-        SwingUtilities.invokeLater(() -> {
+
+            // Optional: Set the initial panel title
+            frame.setTitle("Authentication");   
+        });
+    }
+}
+
+
+ /*SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Student Management System");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.add(new DataBase_UI_Admin());
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
-        });
-    }
-}
+        });*/
