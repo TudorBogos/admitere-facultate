@@ -1,13 +1,10 @@
 import javax.swing.*;
-import javax.swing.table.DefaultTableColumnModel;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
+import javax.swing.table.*;
 import java.awt.*;
 import java.sql.ResultSet;
 
 public class DataBase_UI_Admin extends JPanel {
-    private JTextField numeField, prenumeField, cnpField, idField, notaField;
+    private JTextField numeField, prenumeField, cnpField, idField, notaField, optiuneField;
     private JTable table;
     private DefaultTableModel tableModel;
 
@@ -15,7 +12,7 @@ public class DataBase_UI_Admin extends JPanel {
         setLayout(new BorderLayout());
 
         // Input Panel with their respective fields
-        JPanel inputPanel = new JPanel(new GridLayout(10, 1, 0, 5));
+        JPanel inputPanel = new JPanel(new GridLayout(12, 1, 0, 5));
         inputPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         inputPanel.add(new JLabel("ID:"));
@@ -38,6 +35,10 @@ public class DataBase_UI_Admin extends JPanel {
         notaField = new JTextField();
         inputPanel.add(notaField);
 
+        inputPanel.add(new JLabel("Optiune:"));
+        optiuneField = new JTextField();
+        inputPanel.add(optiuneField);
+
         // Button Panel
         JPanel buttonPanel = new JPanel(new FlowLayout());
         JButton insertButton = new JButton("Insert");
@@ -56,14 +57,17 @@ public class DataBase_UI_Admin extends JPanel {
 
 
         // Tabel setup
-        String[] columnNames = {"ID", "Nume", "Prenume", "CNP", "Nota"};
+        String[] columnNames = {"ID", "Nume", "Prenume", "CNP", "Nota", "Optiune"};
         tableModel = new DefaultTableModel(columnNames, 0);
         table = new JTable(tableModel);
         table.setEnabled(false);
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
+        table.getTableHeader().setReorderingAllowed(false);
+        table.setRowSorter(sorter);
         JScrollPane scrollPane = new JScrollPane(table);
         JPanel tablePanel = new JPanel(new GridBagLayout());
         tablePanel.add(scrollPane);
-        scrollPane.setPreferredSize(new Dimension(450, 215));
+        scrollPane.setPreferredSize(new Dimension(500, 215));
 
 
         // Add all panels to the main panel
@@ -90,7 +94,8 @@ public class DataBase_UI_Admin extends JPanel {
                         numeField.getText(),
                         prenumeField.getText(),
                         validCNP(),
-                        validNota()
+                        validNota(),
+                        validOptiune()
                 );
 
                 JOptionPane.showMessageDialog(this,
@@ -111,6 +116,14 @@ public class DataBase_UI_Admin extends JPanel {
         /// Buton update
         updateButton.addActionListener(e -> {
 
+            if(verifyEmptyID()){
+                JOptionPane.showMessageDialog(this,
+                        "Campul ID trebuie completat",
+                        "Eroare",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             // Finally do the update
             try {
                 int rowsAffected = DatabaseManager.updateStudent(
@@ -118,7 +131,8 @@ public class DataBase_UI_Admin extends JPanel {
                         numeField.getText(),
                         prenumeField.getText(),
                         validCNP(),
-                        validNota()
+                        validNota(),
+                        validOptiune()
                 );
 
                 JOptionPane.showMessageDialog(this,
@@ -140,6 +154,14 @@ public class DataBase_UI_Admin extends JPanel {
         /// Buton delete
         deleteButton.addActionListener(e -> {
 
+            if(verifyEmptyID()){
+                JOptionPane.showMessageDialog(this,
+                        "Campul ID trebuie completat",
+                        "Eroare",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             try {
                 int rowsAffected = DatabaseManager.deleteStudent(validID());
 
@@ -159,19 +181,21 @@ public class DataBase_UI_Admin extends JPanel {
 
         /// Buton view
         viewButton.addActionListener(e -> {
-            if(verifyEmptyView()){
+            if (verifyEmptyView()) {
                 selectTableStudent();
-            }else{
+            } else {
                 try {
-                    filterTableStudent(validID(), numeField.getText(), prenumeField.getText(), validCNP(), validNota());
+                    filterTableStudent();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this,
-                            "Eroare la ștergere student: " + ex.getMessage(),
+                            "Eroare la filtrarea studentului: " + ex.getMessage(),
                             "Eroare",
                             JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
+
+
 
         clearButton.addActionListener(e -> clearFields());
 
@@ -194,13 +218,16 @@ public class DataBase_UI_Admin extends JPanel {
     }
 
     /// Functie pentru validarea CNP-ului
-    public String validCNP() throws Exception{
+    public String validCNP() throws Exception {
         String cnp = cnpField.getText();
-        if(cnp.length() != 13){
-            throw new Exception("CNP-ul trebuie să aibă 13 cifre sau sa fie gol");
+        if (cnp.isEmpty()) {
+            return ""; // Allow empty CNP
         }
-        for(int i = 0; i < cnp.length(); i++){
-            if(!Character.isDigit(cnp.charAt(i))){
+        if (cnp.length() != 13) {
+            throw new Exception("CNP-ul trebuie să aibă 13 cifre sau să fie gol");
+        }
+        for (int i = 0; i < cnp.length(); i++) {
+            if (!Character.isDigit(cnp.charAt(i))) {
                 throw new Exception("CNP-ul trebuie să conțină doar cifre");
             }
         }
@@ -224,10 +251,29 @@ public class DataBase_UI_Admin extends JPanel {
         }
     }
 
+    /// Functie pentru validarea optiunii
+    public String validOptiune() throws Exception {
+        String optiuneText = optiuneField.getText();
+        if (optiuneText.isEmpty()) {
+            return "";
+        }
+        if (DatabaseManager.compareOptiuneFacultate(optiuneText)) {
+            return optiuneText;
+        } else {
+            throw new Exception("Facultatea introdusa nu exista in lista de facultati.");
+        }
+    }
+
+    /// Verifies that the ID field is empty. Returns true if the field is emptpy, false if it is filled. Used for update and delete buttons.
+    public boolean verifyEmptyID(){
+        return idField.getText().isEmpty();
+    }
+
     /// Verifies that the fields are empty for insert. Returns true if any of the fields are empty
     public boolean verifyEmptyInsert(){
         return numeField.getText().isEmpty() || prenumeField.getText().isEmpty() || cnpField.getText().isEmpty() || notaField.getText().isEmpty();
     }
+
     /// Verifies that the fields are empty for viewButton. Returns true if all of the fields are empty
     public boolean verifyEmptyView(){
         return idField.getText().isEmpty() && numeField.getText().isEmpty() && prenumeField.getText().isEmpty() && cnpField.getText().isEmpty() && notaField.getText().isEmpty();
@@ -244,7 +290,8 @@ public class DataBase_UI_Admin extends JPanel {
                         rs.getString("Nume"),
                         rs.getString("Prenume"),
                         rs.getString("CNP"),
-                        rs.getFloat("Nota")
+                        rs.getFloat("Nota"),
+                        rs.getString("Optiune")
                 };
                 tableModel.addRow(row);
             }
@@ -270,7 +317,8 @@ public class DataBase_UI_Admin extends JPanel {
                     numeField.getText(),
                     prenumeField.getText(),
                     validCNP(),
-                    validNota()
+                    validNota(),
+                    validOptiune()
             );
             tableModel.setRowCount(0);
 
@@ -280,7 +328,8 @@ public class DataBase_UI_Admin extends JPanel {
                         rs.getString("Nume"),
                         rs.getString("Prenume"),
                         rs.getString("CNP"),
-                        rs.getFloat("Nota")
+                        rs.getFloat("Nota"),
+                        rs.getString("Optiune")
                 };
                 tableModel.addRow(row);
             }
@@ -304,6 +353,7 @@ public class DataBase_UI_Admin extends JPanel {
         prenumeField.setText("");
         cnpField.setText("");
         notaField.setText("");
+        optiuneField.setText("");
     }
 
     private void autoResizeColumns() {

@@ -49,7 +49,7 @@ public class DatabaseManager extends JOptionPane {
     }
 
     /// Functie pentru selectarea unui student dupa campurile completate
-    public static ResultSet filterStudents(int id, String nume, String prenume, String cnp, float nota) {
+    public static ResultSet filterStudents(int id, String nume, String prenume, String cnp, float nota,String optiune) {
         StringBuilder sql = new StringBuilder("SELECT * FROM Student WHERE ");
         ArrayList<String> filters = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
@@ -78,7 +78,11 @@ public class DatabaseManager extends JOptionPane {
             values.add(nota);
         }
 
-        // If nothing to filter, return
+        if (!optiune.isEmpty()) {
+            filters.add("Optiune");
+            values.add(optiune);
+        }
+
         if (filters.isEmpty()) {
             return null;
         }
@@ -107,21 +111,23 @@ public class DatabaseManager extends JOptionPane {
     }
 
     /// Functie insert cu try-with-resources
-    public static int insertStudent(String nume, String prenume, String cnp, float nota) {
+    public static int insertStudent(String nume, String prenume, String cnp, float nota, String optiune) {
         StringBuilder sql = new StringBuilder("INSERT INTO STUDENT (");
         ArrayList<String> inserts = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
         int rowsAffected = 0;
 
-        // Add non-empty fields to the update
+        // Add non-empty fields to the inserts
         if (!nume.isEmpty()) {
             inserts.add("Nume");
             values.add(nume);
         }
+
         if (!prenume.isEmpty()) {
             inserts.add("Prenume");
             values.add(prenume);
         }
+
         if (!cnp.isEmpty()) {
             inserts.add("CNP");
             values.add(cnp);
@@ -132,7 +138,12 @@ public class DatabaseManager extends JOptionPane {
             values.add(String.valueOf(nota));
         }
 
-        // If nothing to update, return
+        if (!optiune.isEmpty()) {
+            inserts.add("Optiune");
+            values.add(optiune);
+        }
+
+
         if (inserts.isEmpty()) {
             return 0;
         }
@@ -165,7 +176,7 @@ public class DatabaseManager extends JOptionPane {
 
 
     /// Functie update cu try-with-resources
-    public static int updateStudent(int id, String nume, String prenume, String cnp, float nota) {
+    public static int updateStudent(int id, String nume, String prenume, String cnp, float nota,String optiune) {
         StringBuilder sql = new StringBuilder("UPDATE Student SET ");
         ArrayList<String> updates = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
@@ -176,10 +187,12 @@ public class DatabaseManager extends JOptionPane {
             updates.add("Nume=?");
             values.add(nume);
         }
+
         if (!prenume.isEmpty()) {
             updates.add("Prenume=?");
             values.add(prenume);
         }
+
         if (!cnp.isEmpty()) {
             updates.add("CNP=?");
             values.add(cnp);
@@ -190,7 +203,11 @@ public class DatabaseManager extends JOptionPane {
             values.add(nota);
         }
 
-        // If nothing to update, return
+        if (!optiune.isEmpty()) {
+            updates.add("Optiune=?");
+            values.add(optiune);
+        }
+
         if (updates.isEmpty()) {
             return 0;
         }
@@ -223,7 +240,7 @@ public class DatabaseManager extends JOptionPane {
 
     /// Functie delete cu try-with-resources
     public static int deleteStudent(int id) {
-        StringBuilder sql = new StringBuilder("DELETE FROM STUDENT WHERE ID=?");
+        StringBuilder sql = new StringBuilder("DELETE FROM STUDENT WHERE idStudent=?");
         int rowsAffected = 0;
         try (Connection conn = openConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql.toString())) {
@@ -234,6 +251,19 @@ public class DatabaseManager extends JOptionPane {
         }
         return rowsAffected;
 
+    }
+
+    public static boolean compareOptiuneFacultate(String optiune){
+        String sql="SELECT Nume_Facultate FROM Facultate WHERE Nume_Facultate in (Select Optiune from Student where Optiune=?)";
+        try(Connection conn=openConnection();){
+            PreparedStatement pstmt=conn.prepareStatement(sql);
+            pstmt.setString(1,optiune);
+            ResultSet rs=pstmt.executeQuery();
+            return rs.next();
+        } catch (SQLException ex) {
+            System.out.println("Eroare compareOptiuneFacultate: " + ex.getMessage());
+        }
+        return false;
     }
 
     /// Functie de authenticare a adminului cu try-with-resources
