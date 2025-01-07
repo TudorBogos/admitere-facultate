@@ -5,8 +5,9 @@ import java.sql.ResultSet;
 
 public class DataBase_UI_Admin extends JPanel {
     private JTextField numeField, prenumeField, cnpField, idField, notaField, optiuneField;
-    private JTable table;
-    private DefaultTableModel tableModel;
+    private JTable tableStudent, tableFacultate, tableAdmitereStatus;
+    private DefaultTableModel tableModelStudent, tableModelFacultate, tableModelAdmitereStatus;
+    private TableRowSorter<DefaultTableModel> sorter;
 
     public DataBase_UI_Admin() {
         setLayout(new BorderLayout());
@@ -56,24 +57,57 @@ public class DataBase_UI_Admin extends JPanel {
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
 
-        // Tabel setup
+        // Student Table setup
         String[] columnNames = {"ID", "Nume", "Prenume", "CNP", "Nota", "Optiune"};
-        tableModel = new DefaultTableModel(columnNames, 0);
-        table = new JTable(tableModel);
-        table.setEnabled(false);
-        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(tableModel);
-        table.getTableHeader().setReorderingAllowed(false);
-        table.setRowSorter(sorter);
-        JScrollPane scrollPane = new JScrollPane(table);
+        tableModelStudent = new DefaultTableModel(columnNames, 0);
+        tableStudent = new JTable(tableModelStudent);
+        tableStudent.setEnabled(false);
+        sorter = new TableRowSorter<>(tableModelStudent);
+        tableStudent.getTableHeader().setReorderingAllowed(false);
+        tableStudent.setRowSorter(sorter);
+        JScrollPane scrollPane = new JScrollPane(tableStudent);
         JPanel tablePanel = new JPanel(new GridBagLayout());
         tablePanel.add(scrollPane);
-        scrollPane.setPreferredSize(new Dimension(500, 215));
+        scrollPane.setPreferredSize(new Dimension(500, 330));
 
 
-        // Add all panels to the main panel
-        add(inputPanel, BorderLayout.NORTH);
-        add(buttonPanel, BorderLayout.CENTER);
-        add(tablePanel, BorderLayout.SOUTH);
+        // Add input,button and student table panels to the left panel
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.add(inputPanel, BorderLayout.NORTH);
+        leftPanel.add(buttonPanel, BorderLayout.CENTER);
+        leftPanel.add(tablePanel, BorderLayout.SOUTH);
+
+        // Facultate Table setup
+        String[] facultateColumnNames = {"ID", "Nume Facultate", "Adresa", "Numar Locuri"};
+        tableModelFacultate = new DefaultTableModel(facultateColumnNames, 0);
+        tableFacultate = new JTable(tableModelFacultate);
+        tableFacultate.setEnabled(false);
+        TableRowSorter<DefaultTableModel> sorterFacultate = new TableRowSorter<>(tableModelFacultate);
+        tableFacultate.getTableHeader().setReorderingAllowed(false);
+        tableFacultate.setRowSorter(sorterFacultate);
+        JScrollPane scrollPaneFacultate = new JScrollPane(tableFacultate);
+        scrollPaneFacultate.setPreferredSize(new Dimension(500, 150));
+
+        // Admitere_Status Table setup
+        String[] admitereStatusColumnNames = {"Student", "Facultate", "Status"};
+        tableModelAdmitereStatus = new DefaultTableModel(admitereStatusColumnNames, 0);
+        tableAdmitereStatus = new JTable(tableModelAdmitereStatus);
+        tableAdmitereStatus.setEnabled(false);
+        TableRowSorter<DefaultTableModel> sorterAdmitereStatus = new TableRowSorter<>(tableModelAdmitereStatus);
+        tableAdmitereStatus.getTableHeader().setReorderingAllowed(false);
+        tableAdmitereStatus.setRowSorter(sorterAdmitereStatus);
+        JScrollPane scrollPaneAdmitereStatus = new JScrollPane(tableAdmitereStatus);
+        scrollPaneAdmitereStatus.setPreferredSize(new Dimension(500, 330));
+
+
+        // Panel for Facultate and Admitere_Status Tables
+        JPanel rightPanel = new JPanel(new GridLayout(2, 1, 10, 10));
+        rightPanel.add(scrollPaneFacultate);
+        rightPanel.add(scrollPaneAdmitereStatus);
+
+
+        add(leftPanel, BorderLayout.WEST);
+        add(rightPanel, BorderLayout.EAST);
 
 
         /// Buton insert
@@ -91,8 +125,8 @@ public class DataBase_UI_Admin extends JPanel {
             // Perform insert
             try {
                 int rowsAffected = DatabaseManager.insertStudent(
-                        numeField.getText(),
-                        prenumeField.getText(),
+                        numeField.getText().trim(),
+                        prenumeField.getText().trim(),
                         validCNP(),
                         validNota(),
                         validOptiune()
@@ -103,6 +137,7 @@ public class DataBase_UI_Admin extends JPanel {
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
                 selectTableStudent();
+                selectTableAdmitereStatus();
                 clearFields();
 
             } catch (Exception ex) {
@@ -128,8 +163,8 @@ public class DataBase_UI_Admin extends JPanel {
             try {
                 int rowsAffected = DatabaseManager.updateStudent(
                         validID(),
-                        numeField.getText(),
-                        prenumeField.getText(),
+                        numeField.getText().trim(),
+                        prenumeField.getText().trim(),
                         validCNP(),
                         validNota(),
                         validOptiune()
@@ -140,6 +175,7 @@ public class DataBase_UI_Admin extends JPanel {
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
                 selectTableStudent();
+                selectTableAdmitereStatus();
                 clearFields();
 
             } catch (Exception ex) {
@@ -170,10 +206,11 @@ public class DataBase_UI_Admin extends JPanel {
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
                 selectTableStudent();
+                selectTableAdmitereStatus();
                 clearFields();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this,
-                        "Eroare la ștergere student: " + ex.getMessage(),
+                        "Eroare la ștergere student:\n " + ex.getMessage(),
                         "Eroare",
                         JOptionPane.ERROR_MESSAGE);
             }
@@ -188,7 +225,7 @@ public class DataBase_UI_Admin extends JPanel {
                     filterTableStudent();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this,
-                            "Eroare la filtrarea studentului: " + ex.getMessage(),
+                            "Eroare la filtrarea studentului:\n " + ex.getMessage(),
                             "Eroare",
                             JOptionPane.ERROR_MESSAGE);
                 }
@@ -201,8 +238,146 @@ public class DataBase_UI_Admin extends JPanel {
 
         //Function to make the table visible at initialization
         selectTableStudent();
+        selectTableFacultate();
+        selectTableAdmitereStatus();
     }
 
+    /// Functie de populare a tabelului cu studenti
+    public void selectTableStudent() {
+        try {
+            ResultSet rs = DatabaseManager.selectAllStudent();
+            tableModelStudent.setRowCount(0);
+
+            while (rs.next()) {
+                Object[] row = {
+                        rs.getInt("idStudent"),
+                        rs.getString("Nume"),
+                        rs.getString("Prenume"),
+                        rs.getString("CNP"),
+                        rs.getFloat("Nota"),
+                        rs.getString("Optiune")
+                };
+                tableModelStudent.addRow(row);
+            }
+
+            autoResizeColumns(tableStudent);
+            tableStudent.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+            rs.close();
+            DatabaseManager.closeConnection();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Eroare la reîmprospătare tabel student:\n " + e.getMessage(),
+                    "Eroare",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /// Functie de populare a tabelului cu facultati
+    public void selectTableFacultate() {
+        try {
+            ResultSet rs = DatabaseManager.selectFacultate();
+            tableModelFacultate.setRowCount(0);
+
+            while (rs.next()) {
+                Object[] row = {
+                        rs.getInt("idFacultate"),
+                        rs.getString("Nume_Facultate"),
+                        rs.getString("Adresa"),
+                        rs.getInt("numar_locuri"),
+                };
+                tableModelFacultate.addRow(row);
+            }
+
+            autoResizeColumns(tableFacultate);
+            tableFacultate.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+            rs.close();
+            DatabaseManager.closeConnection();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Eroare la reîmprospătare tabel facultate:\n " + e.getMessage(),
+                    "Eroare",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /// Functie de populare a tabelului cu statusuri admitere
+    public void selectTableAdmitereStatus() {
+        try {
+            ResultSet rs = DatabaseManager.selectAdmitereStatus();
+            tableModelAdmitereStatus.setRowCount(0);
+
+            while (rs.next()) {
+                Object[] row = {
+                        rs.getString("Student"),
+                        rs.getString("Facultate"),
+                        rs.getString("Status"),
+                };
+                tableModelAdmitereStatus.addRow(row);
+            }
+
+            autoResizeColumns(tableAdmitereStatus);
+            tableAdmitereStatus.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+            rs.close();
+            DatabaseManager.closeConnection();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Eroare la reîmprospătare tabel admitere_status:\n " + e.getMessage(),
+                    "Eroare",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+
+
+    /// Functie de filtrare a tabelului
+    public void filterTableStudent() {
+        try {
+            ResultSet rs = DatabaseManager.filterStudents(
+                    validID(),
+                    numeField.getText().trim(),
+                    prenumeField.getText().trim(),
+                    validCNP(),
+                    validNota(),
+                    validOptiune()
+            );
+            tableModelStudent.setRowCount(0);
+
+            while (rs.next()) {
+                Object[] row = {
+                        rs.getInt("idStudent"),
+                        rs.getString("Nume"),
+                        rs.getString("Prenume"),
+                        rs.getString("CNP"),
+                        rs.getFloat("Nota"),
+                        rs.getString("Optiune")
+                };
+                tableModelStudent.addRow(row);
+            }
+
+            autoResizeColumns(tableStudent);
+            tableStudent.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+            rs.close();
+            DatabaseManager.closeConnection();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Eroare la reîmprospătare tabel:\n " + e.getMessage(),
+                    "Eroare",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void clearFields() {
+        idField.setText("");
+        numeField.setText("");
+        prenumeField.setText("");
+        cnpField.setText("");
+        notaField.setText("");
+        optiuneField.setText("");
+    }
 
     /// Functie pentru validarea ID-ului
     public int validID() throws Exception {
@@ -219,7 +394,7 @@ public class DataBase_UI_Admin extends JPanel {
 
     /// Functie pentru validarea CNP-ului
     public String validCNP() throws Exception {
-        String cnp = cnpField.getText();
+        String cnp = cnpField.getText().trim();
         if (cnp.isEmpty()) {
             return ""; // Allow empty CNP
         }
@@ -242,8 +417,8 @@ public class DataBase_UI_Admin extends JPanel {
         }
         try {
             float nota = Float.parseFloat(notaText);
-            if (nota < 0 || nota > 10) {
-                throw new Exception("Nota trebuie să fie între 0 și 10");
+            if (nota < 1 || nota > 10) {
+                throw new Exception("Nota trebuie să fie între 1 și 10");
             }
             return nota;
         } catch (NumberFormatException e) {
@@ -253,7 +428,7 @@ public class DataBase_UI_Admin extends JPanel {
 
     /// Functie pentru validarea optiunii
     public String validOptiune() throws Exception {
-        String optiuneText = optiuneField.getText();
+        String optiuneText = optiuneField.getText().trim();
         if (optiuneText.isEmpty()) {
             return "";
         }
@@ -271,122 +446,45 @@ public class DataBase_UI_Admin extends JPanel {
 
     /// Verifies that the fields are empty for insert. Returns true if any of the fields are empty
     public boolean verifyEmptyInsert(){
-        return numeField.getText().isEmpty() || prenumeField.getText().isEmpty() || cnpField.getText().isEmpty() || notaField.getText().isEmpty();
+        return numeField.getText().isEmpty() || prenumeField.getText().isEmpty() || cnpField.getText().isEmpty() || notaField.getText().isEmpty() || optiuneField.getText().isEmpty();
     }
 
-    /// Verifies that the fields are empty for viewButton. Returns true if all of the fields are empty
+    /// Verifies that the fields are empty for viewButton. Returns true if all the fields are empty
     public boolean verifyEmptyView(){
-        return idField.getText().isEmpty() && numeField.getText().isEmpty() && prenumeField.getText().isEmpty() && cnpField.getText().isEmpty() && notaField.getText().isEmpty();
+        return idField.getText().isEmpty() && numeField.getText().isEmpty() && prenumeField.getText().isEmpty() && cnpField.getText().isEmpty() && notaField.getText().isEmpty() && optiuneField.getText().isEmpty() ;
     }
 
-    public void selectTableStudent() {
-        try {
-            ResultSet rs = DatabaseManager.selectAllStudents();
-            tableModel.setRowCount(0);
-
-            while (rs.next()) {
-                Object[] row = {
-                        rs.getInt("idStudent"),
-                        rs.getString("Nume"),
-                        rs.getString("Prenume"),
-                        rs.getString("CNP"),
-                        rs.getFloat("Nota"),
-                        rs.getString("Optiune")
-                };
-                tableModel.addRow(row);
-            }
-
-            autoResizeColumns();
-            table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-            rs.close();
-            DatabaseManager.closeConnection();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Eroare la reîmprospătare tabel.\n " + e.getMessage(),
-                    "Eroare",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    /// Functie de filtrare a tabelului
-    public void filterTableStudent() {
-        try {
-            ResultSet rs = DatabaseManager.filterStudents(
-                    validID(),
-                    numeField.getText(),
-                    prenumeField.getText(),
-                    validCNP(),
-                    validNota(),
-                    validOptiune()
-            );
-            tableModel.setRowCount(0);
-
-            while (rs.next()) {
-                Object[] row = {
-                        rs.getInt("idStudent"),
-                        rs.getString("Nume"),
-                        rs.getString("Prenume"),
-                        rs.getString("CNP"),
-                        rs.getFloat("Nota"),
-                        rs.getString("Optiune")
-                };
-                tableModel.addRow(row);
-            }
-
-            autoResizeColumns();
-            table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-            rs.close();
-            DatabaseManager.closeConnection();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Eroare la reîmprospătare tabel.\n " + e.getMessage(),
-                    "Eroare",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void clearFields() {
-        idField.setText("");
-        numeField.setText("");
-        prenumeField.setText("");
-        cnpField.setText("");
-        notaField.setText("");
-        optiuneField.setText("");
-    }
-
-    private void autoResizeColumns() {
+    private void autoResizeColumns(JTable table) {
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         for (int column = 0; column < table.getColumnCount(); column++) {
             TableColumn tableColumn = table.getColumnModel().getColumn(column);
-            int preferredWidth = tableColumn.getMinWidth();
-            int maxWidth = tableColumn.getMaxWidth();
+            int preferredWidth = 0;
 
             // Get width of column header
             TableCellRenderer headerRenderer = tableColumn.getHeaderRenderer();
             if (headerRenderer == null) {
                 headerRenderer = table.getTableHeader().getDefaultRenderer();
             }
-            Object headerValue = tableColumn.getHeaderValue();
-            Component headerComp = headerRenderer.getTableCellRendererComponent(table, headerValue, false, false, 0, column);
-            preferredWidth = Math.max(preferredWidth, headerComp.getPreferredSize().width);
+            Component headerComp = headerRenderer.getTableCellRendererComponent(
+                    table, tableColumn.getHeaderValue(), false, false, 0, column);
+            preferredWidth = headerComp.getPreferredSize().width;
 
-            // Get maximum width of column data
-            for (int row = 0; row < table.getRowCount(); row++) {
+            // Get maximum width of column data (limit to the first 100 rows for performance)
+            for (int row = 0; row < Math.min(100, table.getRowCount()); row++) {
                 TableCellRenderer cellRenderer = table.getCellRenderer(row, column);
-                Component c = table.prepareRenderer(cellRenderer, row, column);
-                int width = c.getPreferredSize().width;
-                preferredWidth = Math.max(preferredWidth, width);
+                Component cellComp = table.prepareRenderer(cellRenderer, row, column);
+                preferredWidth = Math.max(preferredWidth, cellComp.getPreferredSize().width);
             }
 
-            preferredWidth += table.getIntercellSpacing().width + 10; // Add margin
+            // Add margin
+            preferredWidth += table.getIntercellSpacing().width + 10;
 
             // Set the width
             tableColumn.setPreferredWidth(preferredWidth);
         }
     }
+
 
     // Getters for the fields if needed
     public String getNume() {

@@ -34,13 +34,13 @@ public class DatabaseManager extends JOptionPane {
         }
     }
 
-    /// Functie pentru selectarea tuturor studentilor cu try-with-resources
-    public static ResultSet selectAllStudents() {
+    /// Functie pentru selectarea tuturor studentilor fara try-with-resources
+    public static ResultSet selectAllStudent() {
         try  {
             Connection conn = openConnection();
             if (conn != null) {
                 Statement stmt = conn.createStatement();
-                return stmt.executeQuery("SELECT * FROM Student");
+                return stmt.executeQuery("SELECT idStudent,Nume,Prenume,CNP,nota,Optiune FROM Student");
             }
         } catch (SQLException ex) {
             System.out.println("Eroare selectAllStudents: " + ex.getMessage());
@@ -48,8 +48,46 @@ public class DatabaseManager extends JOptionPane {
         return null;
     }
 
+    /// Functie pentru selectarea tuturor facultatilor fara try-with-resources
+    public static ResultSet selectFacultate() {
+        String sql = "SELECT * FROM Facultate";
+        try {
+            Connection conn = openConnection();
+            if (conn != null) {
+                PreparedStatement pstmt = conn.prepareStatement(sql);
+                return pstmt.executeQuery();
+            }
+        } catch (SQLException ex) {
+            System.out.println("Eroare selectFacultate: " + ex.getMessage());
+        }
+        return null;
+    }
+
+
+    /// Functie pentru selectarea tuturor status-urilor fara try-with-resources
+    public static ResultSet selectAdmitereStatus() {
+        String sql = """
+        SELECT 
+            CONCAT(s.Nume, ' ', s.Prenume) AS Student,
+            f.Nume_Facultate AS Facultate,
+            a.status AS Status
+        FROM admitere_status a
+        JOIN student s ON a.idStudent = s.idStudent
+        JOIN facultate f ON a.idFacultate = f.idFacultate
+    """;
+
+        try {
+            Connection conn = openConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            return pstmt.executeQuery();
+        } catch (SQLException ex) {
+            System.out.println("Eroare selectAdmitereStatus: " + ex.getMessage());
+        }
+        return null;
+    }
+
     /// Functie pentru selectarea unui student dupa campurile completate
-    public static ResultSet filterStudents(int id, String nume, String prenume, String cnp, float nota,String optiune) {
+    public static ResultSet filterStudents(int id, String nume, String prenume, String cnp, float nota, String optiune) {
         StringBuilder sql = new StringBuilder("SELECT * FROM Student WHERE ");
         ArrayList<String> filters = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
@@ -62,15 +100,15 @@ public class DatabaseManager extends JOptionPane {
 
         if (!nume.isEmpty()) {
             filters.add("Nume=?");
-            values.add(nume);
+            values.add(nume.trim());
         }
         if (!prenume.isEmpty()) {
             filters.add("Prenume=?");
-            values.add(prenume);
+            values.add(prenume.trim());
         }
         if (!cnp.isEmpty()) {
             filters.add("CNP=?");
-            values.add(cnp);
+            values.add(cnp.trim());
         }
 
         if (nota != 0f) {
@@ -79,8 +117,8 @@ public class DatabaseManager extends JOptionPane {
         }
 
         if (!optiune.isEmpty()) {
-            filters.add("Optiune");
-            values.add(optiune);
+            filters.add("Optiune=?");
+            values.add(optiune.trim());
         }
 
         if (filters.isEmpty()) {
@@ -102,6 +140,9 @@ public class DatabaseManager extends JOptionPane {
                 pstmt.setObject(paramIndex++, value);
             }
 
+            //for debugging purposes
+            System.out.println(pstmt.toString());
+
             return pstmt.executeQuery();
 
         } catch (SQLException ex) {
@@ -120,27 +161,27 @@ public class DatabaseManager extends JOptionPane {
         // Add non-empty fields to the inserts
         if (!nume.isEmpty()) {
             inserts.add("Nume");
-            values.add(nume);
+            values.add(nume.trim());
         }
 
         if (!prenume.isEmpty()) {
             inserts.add("Prenume");
-            values.add(prenume);
+            values.add(prenume.trim());
         }
 
         if (!cnp.isEmpty()) {
             inserts.add("CNP");
-            values.add(cnp);
+            values.add(cnp.trim());
         }
 
         if (nota != 0f) {
             inserts.add("Nota");
-            values.add(String.valueOf(nota));
+            values.add(nota);
         }
 
         if (!optiune.isEmpty()) {
             inserts.add("Optiune");
-            values.add(optiune);
+            values.add(optiune.trim());
         }
 
 
@@ -166,6 +207,9 @@ public class DatabaseManager extends JOptionPane {
                 pstmt.setObject(paramIndex++, value);
             }
 
+            //for debugging purposes
+            System.out.println(pstmt.toString());
+
             rowsAffected = pstmt.executeUpdate();
 
         } catch (SQLException ex) {
@@ -176,7 +220,7 @@ public class DatabaseManager extends JOptionPane {
 
 
     /// Functie update cu try-with-resources
-    public static int updateStudent(int id, String nume, String prenume, String cnp, float nota,String optiune) {
+    public static int updateStudent(int id, String nume, String prenume, String cnp, float nota, String optiune) {
         StringBuilder sql = new StringBuilder("UPDATE Student SET ");
         ArrayList<String> updates = new ArrayList<>();
         ArrayList<Object> values = new ArrayList<>();
@@ -229,6 +273,9 @@ public class DatabaseManager extends JOptionPane {
             }
             // Set the ID last
             pstmt.setInt(paramIndex, id);
+
+            //for debugging purposes
+            System.out.println(pstmt.toString());
 
             rowsAffected = pstmt.executeUpdate();
 
