@@ -31,7 +31,7 @@ public class Main {
             frame.setVisible(true);
 
             // Optional: Set the initial panel title
-            frame.setTitle("Authentication");
+            frame.setTitle("Student Management System");
         });
     }
 }

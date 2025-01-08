@@ -75,8 +75,7 @@ public class DatabaseManager extends JOptionPane {
         JOIN student s ON a.idStudent = s.idStudent
         JOIN facultate f ON a.idFacultate = f.idFacultate
         ORDER BY f.Nume_Facultate ASC, 
-                 a.status ASC, 
-                 s.Nota DESC;
+                 a.status ASC;
     """;
 
         try {
