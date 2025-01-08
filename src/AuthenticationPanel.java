@@ -13,6 +13,8 @@ public class AuthenticationPanel extends JPanel {
     private JTextField studentCNPField;
     private JButton studentLoginButton;
 
+    private static Integer studentId = 0;
+
     public void setMainPanel(JPanel mainPanel) {
         this.mainPanel = mainPanel;
     }
@@ -68,13 +70,24 @@ public class AuthenticationPanel extends JPanel {
             if (nume.isEmpty() || prenume.isEmpty() || cnp.isEmpty()) {
                 JOptionPane.showMessageDialog(this,
                         "Vă rugăm completați toate câmpurile",
-                        "Eroare",
+                        "Error",
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            System.out.println("Student attempting login: " + nume + " " + prenume + " with CNP: " + cnp);
+            studentId = DatabaseManager.authenticateStudent(nume, prenume, cnp);
+            if (studentId != null) {
+                DataBase_UI_Student.setStudentIdLabel(studentId);
+                CardLayout cardLayout = (CardLayout) mainPanel.getLayout();
+                cardLayout.show(mainPanel, "student");
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Informatii de logare gresite",
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         });
+
     }
 
     private JPanel createAdminPanel() {
@@ -128,4 +141,9 @@ public class AuthenticationPanel extends JPanel {
         panel.add(field);
         return panel;
     }
+
+    public static Integer getStudentId() {
+        return studentId;
+    }
+
 }

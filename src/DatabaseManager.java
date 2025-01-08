@@ -398,9 +398,24 @@ public class DatabaseManager extends JOptionPane {
 
 
     /// Functie de autentificare a studentului cu try-with-resources
-    public static boolean authenticateStudent(String Nume, String Prenume, String CNP) {
-        return false;
+    public static Integer authenticateStudent(String nume, String prenume, String cnp) {
+        String sql = "SELECT idStudent FROM student WHERE Nume = ? AND Prenume = ? AND CNP = ?";
+        try (Connection conn = DatabaseManager.openConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, nume);
+            pstmt.setString(2, prenume);
+            pstmt.setString(3, cnp);
+
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("idStudent"); // Return the idStudent if found
+            }
+        } catch (SQLException ex) {
+            System.out.println("Eroare authenticateStudent: " + ex.getMessage());
+        }
+        return null;
     }
+
 }
 
 

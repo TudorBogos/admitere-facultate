@@ -1,7 +1,7 @@
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.sql.ResultSet;
+import java.sql.*;
 
 public class DataBase_UI_Admin extends JPanel {
     private JTextField numeField, prenumeField, cnpField, idField, notaField, optiuneField;
@@ -134,9 +134,9 @@ public class DataBase_UI_Admin extends JPanel {
                         "S-au inserat " + rowsAffected + " rânduri",
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
-                selectTableStudent();
+                populateTableStudent();
                 DatabaseManager.updateAdmitereStatus();
-                selectTableAdmitereStatus();
+                populateTableAdmitereStatus();
                 clearFields();
 
             } catch (Exception ex) {
@@ -173,8 +173,8 @@ public class DataBase_UI_Admin extends JPanel {
                         "S-au actualizat " + rowsAffected + " rânduri",
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
-                selectTableStudent();
-                selectTableAdmitereStatus();
+                populateTableStudent();
+                populateTableAdmitereStatus();
                 DatabaseManager.updateAdmitereStatus();
                 clearFields();
 
@@ -205,9 +205,9 @@ public class DataBase_UI_Admin extends JPanel {
                         "S-au șters " + rowsAffected + " rânduri",
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
-                selectTableStudent();
+                populateTableStudent();
                 DatabaseManager.updateAdmitereStatus();
-                selectTableAdmitereStatus();
+                populateTableAdmitereStatus();
                 clearFields();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this,
@@ -220,7 +220,7 @@ public class DataBase_UI_Admin extends JPanel {
         /// Buton view
         viewButton.addActionListener(e -> {
             if (verifyEmptyView()) {
-                selectTableStudent();
+                populateTableStudent();
             } else {
                 try {
                     filterTableStudent();
@@ -238,14 +238,14 @@ public class DataBase_UI_Admin extends JPanel {
         clearButton.addActionListener(e -> clearFields());
 
         //Function to make the table visible at initialization
-        selectTableStudent();
-        selectTableFacultate();
+        populateTableStudent();
+        populateTableFacultate();
         DatabaseManager.updateAdmitereStatus();
-        selectTableAdmitereStatus();
+        populateTableAdmitereStatus();
     }
 
     /// Functie de populare a tabelului cu studenti
-    public void selectTableStudent() {
+    public void populateTableStudent() {
         try {
             ResultSet rs = DatabaseManager.selectAllStudent();
             tableModelStudent.setRowCount(0);
@@ -276,7 +276,7 @@ public class DataBase_UI_Admin extends JPanel {
     }
 
     /// Functie de populare a tabelului cu facultati
-    public void selectTableFacultate() {
+    public void populateTableFacultate() {
         try {
             ResultSet rs = DatabaseManager.selectFacultate();
             tableModelFacultate.setRowCount(0);
@@ -305,7 +305,7 @@ public class DataBase_UI_Admin extends JPanel {
     }
 
     /// Functie de populare a tabelului cu statusuri admitere
-    public void selectTableAdmitereStatus() {
+    public void populateTableAdmitereStatus() {
         try {
             ResultSet rs = DatabaseManager.selectAdmitereStatus();
             tableModelAdmitereStatus.setRowCount(0);

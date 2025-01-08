@@ -7,39 +7,31 @@ public class Main {
             JFrame frame = new JFrame("Student Management System");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-            // Create our main panel with CardLayout
+            // Create main panel with CardLayout
             JPanel mainPanel = new JPanel(new CardLayout());
 
-            // Create our panels
+            // Create panels
             AuthenticationPanel authPanel = new AuthenticationPanel();
             DataBase_UI_Admin adminPanel = new DataBase_UI_Admin();
+            DataBase_UI_Student studentPanel = new DataBase_UI_Student();
 
-            // Add panels to the main panel with unique names
+            // Add panels to the mainPanel with unique identifiers
             mainPanel.add(authPanel, "auth");
             mainPanel.add(adminPanel, "admin");
+            mainPanel.add(studentPanel, "student");
 
-            // Add the main panel to the frame
-            frame.add(mainPanel);
-            frame.pack(); // Automatically size frame to fit the components
-            frame.setMinimumSize(new Dimension(800, 600)); // Optional: Minimum size for the window
-            frame.setLocationRelativeTo(null); // Center the frame on screen
-            frame.setVisible(true);
-
-            // Give the auth panel access to the CardLayout for switching
+            // Pass the mainPanel and studentPanel to authPanel for navigation and updates
             authPanel.setMainPanel(mainPanel);
 
+            // Add the mainPanel to the frame
+            frame.add(mainPanel);
+            frame.pack();
+            frame.setMinimumSize(new Dimension(800, 600));
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+
             // Optional: Set the initial panel title
-            frame.setTitle("Authentication");   
+            frame.setTitle("Authentication");
         });
     }
 }
-
-
- /*SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Student Management System");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(new DataBase_UI_Admin());
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });*/
