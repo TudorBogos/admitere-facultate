@@ -1,0 +1,32 @@
+<component name="libraryTable">
+  <library name="Proiect_BD">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/libs/mysql-connector-j-9.1.0/mysql-connector-j-9.1.0.jar!/" />
+      <root url="file://$PROJECT_DIR$/libs/iText-Core-9.0.0" />
+      <root url="jar://$PROJECT_DIR$/libs/slf4j-jdk14-2.0.16.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/slf4j-api-2.0.16.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/barcodes-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/bouncy-castle-adapter-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/bouncy-castle-connector-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/bouncy-castle-fips-adapter-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/commons-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/forms-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/io-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/kernel-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/layout-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/pdfa-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/pdftest-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/pdfua-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/sign-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/styled-xml-parser-9.0.0-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/svg-9.0.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="file://$PROJECT_DIR$/libs/iText-Core-9.0.0" />
+    </SOURCES>
+    <jarDirectory url="file://$PROJECT_DIR$/libs/iText-Core-9.0.0" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/libs/iText-Core-9.0.0" recursive="false" type="SOURCES" />
+  </library>
+</component>

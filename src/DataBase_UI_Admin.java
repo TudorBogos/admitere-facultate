@@ -1,7 +1,17 @@
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.table.*;
 import java.awt.*;
+import java.io.IOException;
 import java.sql.*;
+import java.io.FileWriter;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.element.Cell;
+
 
 public class DataBase_UI_Admin extends JPanel {
     private JTextField numeField, prenumeField, cnpField, idField, notaField, optiuneField;
@@ -41,20 +51,20 @@ public class DataBase_UI_Admin extends JPanel {
         inputPanel.add(optiuneField);
 
         // Button Panel
-        JPanel buttonPanel = new JPanel(new FlowLayout());
+        JPanel leftButtonPanel = new JPanel(new FlowLayout());
         JButton insertButton = new JButton("Insert");
         JButton updateButton = new JButton("Update");
         JButton deleteButton = new JButton("Delete");
         JButton viewButton = new JButton("Filter/Update tabela studenti");
         JButton clearButton = new JButton("Clear field-uri");
 
-        buttonPanel.add(insertButton);
-        buttonPanel.add(updateButton);
-        buttonPanel.add(deleteButton);
-        buttonPanel.add(viewButton);
-        buttonPanel.add(clearButton);
+        leftButtonPanel.add(insertButton);
+        leftButtonPanel.add(updateButton);
+        leftButtonPanel.add(deleteButton);
+        leftButtonPanel.add(viewButton);
+        leftButtonPanel.add(clearButton);
 
-        buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+        leftButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
 
         // Student Table setup
@@ -68,11 +78,10 @@ public class DataBase_UI_Admin extends JPanel {
         tablePanel.add(scrollPane);
         scrollPane.setPreferredSize(new Dimension(500, 330));
 
-
         // Add input,button and student table panels to the left panel
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.add(inputPanel, BorderLayout.NORTH);
-        leftPanel.add(buttonPanel, BorderLayout.CENTER);
+        leftPanel.add(leftButtonPanel, BorderLayout.CENTER);
         leftPanel.add(tablePanel, BorderLayout.SOUTH);
 
         // Facultate Table setup
@@ -84,7 +93,17 @@ public class DataBase_UI_Admin extends JPanel {
         tableFacultate.getTableHeader().setReorderingAllowed(false);
         tableFacultate.setRowSorter(sorterFacultate);
         JScrollPane scrollPaneFacultate = new JScrollPane(tableFacultate);
-        scrollPaneFacultate.setPreferredSize(new Dimension(500, 150));
+        scrollPaneFacultate.setPreferredSize(new Dimension(500, 300));
+
+        // Add exportToExcelButton and exportToPDFButton
+        JPanel rightButtonPanel= new JPanel(new FlowLayout());
+        JButton exportToExcelButton = new JButton("Export to Excel tabela de mai jos");
+        JButton exportToPDFButton = new JButton("Export to PDF tabela de mai jos");
+
+        rightButtonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0,0 , 0));
+
+        rightButtonPanel.add(exportToExcelButton);
+        rightButtonPanel.add(exportToPDFButton);
 
         // Admitere_Status Table setup
         String[] admitereStatusColumnNames = {"Student", "Facultate", "Status"};
@@ -99,10 +118,10 @@ public class DataBase_UI_Admin extends JPanel {
 
 
         // Panel for Facultate and Admitere_Status Tables
-        JPanel rightPanel = new JPanel(new GridLayout(2, 1, 10, 10));
-        rightPanel.add(scrollPaneFacultate);
-        rightPanel.add(scrollPaneAdmitereStatus);
-
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.add(scrollPaneFacultate,BorderLayout.NORTH);
+        rightPanel.add(rightButtonPanel, BorderLayout.CENTER);
+        rightPanel.add(scrollPaneAdmitereStatus, BorderLayout.SOUTH);
 
         add(leftPanel, BorderLayout.WEST);
         add(rightPanel, BorderLayout.EAST);
@@ -233,7 +252,37 @@ public class DataBase_UI_Admin extends JPanel {
             }
         });
 
+        /// Buton export to Excel care da export la tabela studenti
+        exportToExcelButton.addActionListener(e -> {
+            try {
+                String filePath = "students_export.csv"; // Define the file path
+                exportTableModelToCSV(filePath);
+                JOptionPane.showMessageDialog(this,
+                        "Succes export CSV " + filePath,
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Eroare la export CSV: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
+        /// Buton export to PDF care da export la tabela studenti
+        exportToPDFButton.addActionListener(e -> {try {
+            String filePath = "students_export.PDF"; // Define the file path
+            exportTableModelToPDF(filePath);
+            JOptionPane.showMessageDialog(this,
+                    "Succes export PDF " + filePath,
+                    "Success",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Eroare la export PDF: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }});
 
         clearButton.addActionListener(e -> clearFields());
 
@@ -495,7 +544,66 @@ public class DataBase_UI_Admin extends JPanel {
             // Set the width
             tableColumn.setPreferredWidth(preferredWidth);
         }
+
+
+
     }
+
+    /// Functie pentru export in CSV care se poate deschide in Excel
+    private void exportTableModelToCSV(String filePath) throws IOException {
+        try (FileWriter csvWriter = new FileWriter(filePath)) {
+            // Write column headers
+            int columnCount = tableModelAdmitereStatus.getColumnCount();
+            for (int i = 0; i < columnCount; i++) {
+                csvWriter.append(tableModelAdmitereStatus.getColumnName(i));
+                if (i < columnCount - 1) {
+                    csvWriter.append(",");
+                }
+            }
+            csvWriter.append("\n");
+
+            // Write rows
+            int rowCount = tableModelAdmitereStatus.getRowCount();
+            for (int i = 0; i < rowCount; i++) {
+                for (int j = 0; j < columnCount; j++) {
+                    csvWriter.append(String.valueOf(tableModelAdmitereStatus.getValueAt(i, j)));
+                    if (j < columnCount - 1) {
+                        csvWriter.append(",");
+                    }
+                }
+                csvWriter.append("\n");
+            }
+        }
+    }
+
+    private void exportTableModelToPDF(String filePath) throws IOException {
+        // Initialize PDF writer and document
+        PdfWriter writer = new PdfWriter(filePath);
+        PdfDocument pdfDoc = new PdfDocument(writer);
+        Document document = new Document(pdfDoc);
+
+        // Create a table with the number of columns in the table model
+        int columnCount = tableModelAdmitereStatus.getColumnCount();
+        Table pdfTable = new Table(columnCount);
+
+        // Add table headers
+        for (int i = 0; i < columnCount; i++) {
+            pdfTable.addCell(new Cell().add(new Paragraph(tableModelAdmitereStatus.getColumnName(i))));
+        }
+
+        // Add table data rows
+        int rowCount = tableModelAdmitereStatus.getRowCount();
+        for (int i = 0; i < rowCount; i++) {
+            for (int j = 0; j < columnCount; j++) {
+                pdfTable.addCell(new Cell().add(new Paragraph(String.valueOf(tableModelAdmitereStatus.getValueAt(i, j)))));
+            }
+        }
+
+        // Add the table to the document and close the document
+        document.add(pdfTable);
+        document.close();
+    }
+
 
 
     // Getters for the fields if needed
