@@ -101,12 +101,12 @@ public class DatabaseManager extends JOptionPane {
         }
 
         if (!nume.isEmpty()) {
-            filters.add("Nume=?");
-            values.add(nume.trim());
+            filters.add("Nume LIKE ?");
+            values.add("%"+ nume.trim()+"%");
         }
         if (!prenume.isEmpty()) {
-            filters.add("Prenume=?");
-            values.add(prenume.trim());
+            filters.add("Prenume LIKE ?");
+            values.add("%"+ prenume.trim()+"%");
         }
         if (!cnp.isEmpty()) {
             filters.add("CNP=?");
@@ -307,23 +307,24 @@ public class DatabaseManager extends JOptionPane {
 
     /// Functie care updateaza admitere_status cu admis/respins automat bazat pe nr de locuri
     public static void updateAdmitereStatus() {
-        String sql =
-                "UPDATE admitere_status a " +
-                        "JOIN (" +
-                        "    SELECT " +
-                        "        a.idStudent, " +
-                        "        a.idFacultate, " +
-                        "        IF(" +
-                        "            RANK() OVER (PARTITION BY a.idFacultate ORDER BY s.Nota DESC) <= f.numar_locuri, " +
-                        "            'admis', " +
-                        "            'respins'" +
-                        "        ) AS new_status " +
-                        "    FROM admitere_status a " +
-                        "    JOIN facultate f ON a.idFacultate = f.idFacultate " +
-                        "    JOIN student s ON a.idStudent = s.idStudent " +
-                        ") ranked_status " +
-                        "ON a.idStudent = ranked_status.idStudent AND a.idFacultate = ranked_status.idFacultate " +
-                        "SET a.status = ranked_status.new_status;";
+        String sql = """
+                UPDATE admitere_status a  +
+                        JOIN ( +
+                            SELECT  +
+                                a.idStudent,  +
+                                a.idFacultate,  +
+                                IF( +
+                                    RANK() OVER (PARTITION BY a.idFacultate ORDER BY s.Nota DESC) <= f.numar_locuri,  +
+                                    'admis',  +
+                                    'respins' +
+                                ) AS new_status  +
+                            FROM admitere_status a  +
+                            JOIN facultate f ON a.idFacultate = f.idFacultate  +
+                            JOIN student s ON a.idStudent = s.idStudent  +
+                        ) ranked_status  +
+                        ON a.idStudent = ranked_status.idStudent AND a.idFacultate = ranked_status.idFacultate  +
+                        SET a.status = ranked_status.new_status;;
+                """;
 
         try (Connection conn = openConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {

@@ -76,7 +76,7 @@ public class DataBase_UI_Admin extends JPanel {
         JScrollPane scrollPane = new JScrollPane(tableStudent);
         JPanel tablePanel = new JPanel(new GridBagLayout());
         tablePanel.add(scrollPane);
-        scrollPane.setPreferredSize(new Dimension(500, 330));
+        scrollPane.setPreferredSize(new Dimension(550, 330));
 
         // Add input,button and student table panels to the left panel
         JPanel leftPanel = new JPanel(new BorderLayout());
@@ -89,9 +89,8 @@ public class DataBase_UI_Admin extends JPanel {
         tableModelFacultate = new DefaultTableModel(facultateColumnNames, 0);
         tableFacultate = new JTable(tableModelFacultate);
         tableFacultate.setEnabled(false);
-        TableRowSorter<DefaultTableModel> sorterFacultate = new TableRowSorter<>(tableModelFacultate);
         tableFacultate.getTableHeader().setReorderingAllowed(false);
-        tableFacultate.setRowSorter(sorterFacultate);
+
         JScrollPane scrollPaneFacultate = new JScrollPane(tableFacultate);
         scrollPaneFacultate.setPreferredSize(new Dimension(500, 300));
 
@@ -114,7 +113,7 @@ public class DataBase_UI_Admin extends JPanel {
         tableAdmitereStatus.getTableHeader().setReorderingAllowed(false);
         tableAdmitereStatus.setRowSorter(sorterAdmitereStatus);
         JScrollPane scrollPaneAdmitereStatus = new JScrollPane(tableAdmitereStatus);
-        scrollPaneAdmitereStatus.setPreferredSize(new Dimension(500, 330));
+        scrollPaneAdmitereStatus.setPreferredSize(new Dimension(400, 330));
 
 
         // Panel for Facultate and Admitere_Status Tables
