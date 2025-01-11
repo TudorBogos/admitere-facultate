@@ -1,22 +1,37 @@
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.table.*;
-import java.awt.*;
-import java.io.IOException;
-import java.sql.*;
-import java.io.FileWriter;
-import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.element.Cell;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableRowSorter;
+import java.awt.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.ResultSet;
 
 
 public class DataBase_UI_Admin extends JPanel {
-    private JTextField numeField, prenumeField, cnpField, idField, notaField, optiuneField;
-    private JTable tableStudent, tableFacultate, tableAdmitereStatus;
-    private DefaultTableModel tableModelStudent, tableModelFacultate, tableModelAdmitereStatus;
+    private final JTextField numeField;
+    private final JTextField prenumeField;
+    private final JTextField cnpField;
+    private final JTextField idField;
+    private final JTextField notaField;
+    private final JTextField optiuneField;
+    private final JTable tableStudent;
+    private final JTable tableFacultate;
+    private final JTable tableAdmitereStatus;
+    private final DefaultTableModel tableModelStudent;
+    private final DefaultTableModel tableModelFacultate;
+    private final DefaultTableModel tableModelAdmitereStatus;
     private TableRowSorter<DefaultTableModel> sorter;
 
     public DataBase_UI_Admin() {
@@ -57,12 +72,14 @@ public class DataBase_UI_Admin extends JPanel {
         JButton deleteButton = new JButton("Delete");
         JButton viewButton = new JButton("Filter/Update tabela studenti");
         JButton clearButton = new JButton("Clear field-uri");
+        JButton importCSVButton = new JButton("Import CSV");
 
         leftButtonPanel.add(insertButton);
         leftButtonPanel.add(updateButton);
         leftButtonPanel.add(deleteButton);
         leftButtonPanel.add(viewButton);
         leftButtonPanel.add(clearButton);
+        leftButtonPanel.add(importCSVButton);
 
         leftButtonPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
 
@@ -94,14 +111,14 @@ public class DataBase_UI_Admin extends JPanel {
         JScrollPane scrollPaneFacultate = new JScrollPane(tableFacultate);
         scrollPaneFacultate.setPreferredSize(new Dimension(500, 300));
 
-        // Add exportToExcelButton and exportToPDFButton
-        JPanel rightButtonPanel= new JPanel(new FlowLayout());
-        JButton exportToExcelButton = new JButton("Export to Excel tabela de mai jos");
+        // Add exportToCSVButton and exportToPDFButton
+        JPanel rightButtonPanel = new JPanel(new FlowLayout());
+        JButton exportToCSVButton = new JButton("Export to Excel tabela de mai jos");
         JButton exportToPDFButton = new JButton("Export to PDF tabela de mai jos");
 
-        rightButtonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0,0 , 0));
+        rightButtonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
 
-        rightButtonPanel.add(exportToExcelButton);
+        rightButtonPanel.add(exportToCSVButton);
         rightButtonPanel.add(exportToPDFButton);
 
         // Admitere_Status Table setup
@@ -118,7 +135,7 @@ public class DataBase_UI_Admin extends JPanel {
 
         // Panel for Facultate and Admitere_Status Tables
         JPanel rightPanel = new JPanel(new BorderLayout());
-        rightPanel.add(scrollPaneFacultate,BorderLayout.NORTH);
+        rightPanel.add(scrollPaneFacultate, BorderLayout.NORTH);
         rightPanel.add(rightButtonPanel, BorderLayout.CENTER);
         rightPanel.add(scrollPaneAdmitereStatus, BorderLayout.SOUTH);
 
@@ -130,7 +147,7 @@ public class DataBase_UI_Admin extends JPanel {
         insertButton.addActionListener(e -> {
 
             //Verificare campuri goale
-            if(verifyEmptyInsert()){
+            if (verifyEmptyInsert()) {
                 JOptionPane.showMessageDialog(this,
                         "Trebuie să fie toate câmpurile completate pentru a adăuga un student nou. (Fară ID)",
                         "Eroare",
@@ -168,7 +185,7 @@ public class DataBase_UI_Admin extends JPanel {
         /// Buton update
         updateButton.addActionListener(e -> {
 
-            if(verifyEmptyID()){
+            if (verifyEmptyID()) {
                 JOptionPane.showMessageDialog(this,
                         "Campul ID trebuie completat",
                         "Eroare",
@@ -192,8 +209,8 @@ public class DataBase_UI_Admin extends JPanel {
                         "Succes",
                         JOptionPane.INFORMATION_MESSAGE);
                 populateTableStudent();
-                populateTableAdmitereStatus();
                 DatabaseManager.updateAdmitereStatus();
+                populateTableAdmitereStatus();
                 clearFields();
 
             } catch (Exception ex) {
@@ -208,7 +225,7 @@ public class DataBase_UI_Admin extends JPanel {
         /// Buton delete
         deleteButton.addActionListener(e -> {
 
-            if(verifyEmptyID()){
+            if (verifyEmptyID()) {
                 JOptionPane.showMessageDialog(this,
                         "Campul ID trebuie completat",
                         "Eroare",
@@ -239,12 +256,13 @@ public class DataBase_UI_Admin extends JPanel {
         viewButton.addActionListener(e -> {
             if (verifyEmptyView()) {
                 populateTableStudent();
+                populateTableAdmitereStatus();
             } else {
                 try {
                     filterTableStudent();
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this,
-                             ex.getMessage(),
+                            ex.getMessage(),
                             "Eroare",
                             JOptionPane.ERROR_MESSAGE);
                 }
@@ -252,7 +270,7 @@ public class DataBase_UI_Admin extends JPanel {
         });
 
         /// Buton export to Excel care da export la tabela studenti
-        exportToExcelButton.addActionListener(e -> {
+        exportToCSVButton.addActionListener(e -> {
             try {
                 String filePath = "students_export.csv"; // Define the file path
                 exportTableModelToCSV(filePath);
@@ -269,19 +287,54 @@ public class DataBase_UI_Admin extends JPanel {
         });
 
         /// Buton export to PDF care da export la tabela studenti
-        exportToPDFButton.addActionListener(e -> {try {
-            String filePath = "students_export.PDF"; // Define the file path
-            exportTableModelToPDF(filePath);
-            JOptionPane.showMessageDialog(this,
-                    "Succes export PDF " + filePath,
-                    "Success",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Eroare la export PDF: " + ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }});
+        exportToPDFButton.addActionListener(e -> {
+            try {
+                String filePath = "students_export.PDF"; // Define the file path
+                exportTableModelToPDF(filePath);
+                JOptionPane.showMessageDialog(this,
+                        "Succes export PDF" + filePath,
+                        "Success",
+                        JOptionPane.INFORMATION_MESSAGE);
+            } catch (IOException ex) {
+                JOptionPane.showMessageDialog(this,
+                        "Eroare la export PDF: " + ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        /// Buton import CSV tabela Student
+        importCSVButton.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            int result = fileChooser.showOpenDialog(this);
+
+            if (result == JFileChooser.APPROVE_OPTION) {
+                String filePath = fileChooser.getSelectedFile().getAbsolutePath();
+                try {
+                    // Import the CSV data and process it
+                    importCSVToTableModel(filePath);
+
+                    // Display success message
+                    JOptionPane.showMessageDialog(this,
+                            "Importul fișierului CSV a fost finalizat cu succes!",
+                            "Succes",
+                            JOptionPane.INFORMATION_MESSAGE);
+                } catch (Exception ex) {
+                    // Display error message
+                    JOptionPane.showMessageDialog(this,
+                            "Eroare la importul CSV: " + ex.getMessage(),
+                            "Eroare",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            }
+
+            DatabaseManager.updateAdmitereStatus();
+            populateTableAdmitereStatus();
+            populateTableStudent();
+            clearFields();
+        });
+
+
 
         clearButton.addActionListener(e -> clearFields());
 
@@ -381,7 +434,6 @@ public class DataBase_UI_Admin extends JPanel {
     }
 
 
-
     /// Functie de filtrare a tabelului
     public void filterTableStudent() throws Exception {
         try {
@@ -469,6 +521,23 @@ public class DataBase_UI_Admin extends JPanel {
         return cnp;
     }
 
+    public static String validCNP(String cnp) throws Exception {
+        if (cnp == null || cnp.trim().isEmpty()) {
+            throw new Exception("CNP-ul nu poate fi gol.");
+        }
+        cnp = cnp.trim(); // Ensure no leading/trailing spaces
+        if (cnp.length() != 13) {
+            throw new Exception("CNP-ul trebuie să aibă 13 cifre.");
+        }
+        for (int i = 0; i < cnp.length(); i++) {
+            if (!Character.isDigit(cnp.charAt(i))) {
+                throw new Exception("CNP-ul trebuie să conțină doar cifre.");
+            }
+        }
+        return cnp; // Return the valid CNP
+    }
+
+
     /// Functie pentru validarea notei
     public float validNota() throws Exception {
         String notaText = notaField.getText();
@@ -486,6 +555,23 @@ public class DataBase_UI_Admin extends JPanel {
         }
     }
 
+    /// Funcție pentru validarea notei
+    public static float validNota(String notaText) throws Exception {
+        if (notaText == null || notaText.trim().isEmpty()) {
+            throw new Exception("Nota nu poate fi goală.");
+        }
+        try {
+            float nota = Float.parseFloat(notaText.trim());
+            if (nota < 1 || nota > 10) {
+                throw new Exception("Nota trebuie să fie între 1 și 10.");
+            }
+            return nota;
+        } catch (NumberFormatException e) {
+            throw new Exception("Nota trebuie să fie un număr valid.");
+        }
+    }
+
+
     /// Functie pentru validarea optiunii
     public String validOptiune() throws Exception {
         String optiuneText = optiuneField.getText().trim();
@@ -499,19 +585,33 @@ public class DataBase_UI_Admin extends JPanel {
         }
     }
 
+    /// Funcție pentru validarea opțiunii
+    public static String validOptiune(String optiuneText) throws Exception {
+        if (optiuneText == null || optiuneText.trim().isEmpty()) {
+            throw new Exception("Opțiunea nu poate fi goală.");
+        }
+        optiuneText = optiuneText.trim();
+        if (DatabaseManager.compareOptiuneFacultate(optiuneText)) {
+            return optiuneText;
+        } else {
+            throw new Exception("Facultatea introdusă nu există în lista de facultăți.");
+        }
+    }
+
+
     /// Verifies that the ID field is empty. Returns true if the field is emptpy, false if it is filled. Used for update and delete buttons.
-    public boolean verifyEmptyID(){
+    public boolean verifyEmptyID() {
         return idField.getText().isEmpty();
     }
 
     /// Verifies that the fields are empty for insert. Returns true if any of the fields are empty
-    public boolean verifyEmptyInsert(){
+    public boolean verifyEmptyInsert() {
         return numeField.getText().isEmpty() || prenumeField.getText().isEmpty() || cnpField.getText().isEmpty() || notaField.getText().isEmpty() || optiuneField.getText().isEmpty();
     }
 
     /// Verifies that the fields are empty for viewButton. Returns true if all the fields are empty
-    public boolean verifyEmptyView(){
-        return idField.getText().isEmpty() && numeField.getText().isEmpty() && prenumeField.getText().isEmpty() && cnpField.getText().isEmpty() && notaField.getText().isEmpty() && optiuneField.getText().isEmpty() ;
+    public boolean verifyEmptyView() {
+        return idField.getText().isEmpty() && numeField.getText().isEmpty() && prenumeField.getText().isEmpty() && cnpField.getText().isEmpty() && notaField.getText().isEmpty() && optiuneField.getText().isEmpty();
     }
 
     private void autoResizeColumns(JTable table) {
@@ -545,16 +645,15 @@ public class DataBase_UI_Admin extends JPanel {
         }
 
 
-
     }
 
     /// Functie pentru export in CSV care se poate deschide in Excel
     private void exportTableModelToCSV(String filePath) throws IOException {
         try (FileWriter csvWriter = new FileWriter(filePath)) {
             // Write column headers
-            int columnCount = tableModelAdmitereStatus.getColumnCount();
+            int columnCount = tableModelStudent.getColumnCount();
             for (int i = 0; i < columnCount; i++) {
-                csvWriter.append(tableModelAdmitereStatus.getColumnName(i));
+                csvWriter.append(tableModelStudent.getColumnName(i));
                 if (i < columnCount - 1) {
                     csvWriter.append(",");
                 }
@@ -562,10 +661,10 @@ public class DataBase_UI_Admin extends JPanel {
             csvWriter.append("\n");
 
             // Write rows
-            int rowCount = tableModelAdmitereStatus.getRowCount();
+            int rowCount = tableModelStudent.getRowCount();
             for (int i = 0; i < rowCount; i++) {
                 for (int j = 0; j < columnCount; j++) {
-                    csvWriter.append(String.valueOf(tableModelAdmitereStatus.getValueAt(i, j)));
+                    csvWriter.append(String.valueOf(tableModelStudent.getValueAt(i, j)));
                     if (j < columnCount - 1) {
                         csvWriter.append(",");
                     }
@@ -575,6 +674,7 @@ public class DataBase_UI_Admin extends JPanel {
         }
     }
 
+    /// Functie pentru export in PDF care se poate deschide in Acrobat Reader sau extensie browser pentru citit pdf-uri
     private void exportTableModelToPDF(String filePath) throws IOException {
         // Initialize PDF writer and document
         PdfWriter writer = new PdfWriter(filePath);
@@ -603,7 +703,63 @@ public class DataBase_UI_Admin extends JPanel {
         document.close();
     }
 
+    /// Funcție pentru import din CSV a tabelei Student
+    public void importCSVToTableModel(String filePath) throws Exception {
+        int totalInserted = 0;
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            Connection conn=DatabaseManager.openConnection();
 
+            // Validare antet coloane
+            String headerLine = br.readLine();
+            if (headerLine == null) {
+                throw new Exception("Fișierul CSV este gol.");
+            }
+
+            String[] headers = headerLine.split(",");
+            int columnCount = 5; // Numărul de coloane așteptat
+            String[] expectedColumns = {"Nume", "Prenume", "CNP", "Nota", "Optiune"}; // Coloanele așteptate
+
+            // Validare număr coloane și header
+            if (headers.length != columnCount) {
+                throw new Exception("Numărul de coloane din CSV nu corespunde celui așteptat (5).");
+            }
+            for (int i = 0; i < expectedColumns.length; i++) {
+                if (!headers[i].trim().equalsIgnoreCase(expectedColumns[i])) {
+                    throw new Exception("Numele coloanelor nu corespund cu cele așteptate.");
+                }
+            }
+
+            // Procesare fiecare rând din CSV
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] values = line.split(",");
+                if (values.length != columnCount) {
+                    System.out.println("Sărim rândul din cauza numărului incorect de coloane: " + line);
+                    continue;
+                }
+
+                try {
+                    // Extrage și validează valorile
+                    String nume = values[0].trim();
+                    String prenume = values[1].trim();
+                    String cnp = validCNP(values[2].trim());
+                    float nota = validNota(values[3].trim());
+                    String optiune = validOptiune(values[4].trim());
+
+                    // Apelează funcția de inserare
+                    if (DatabaseManager.insertStudentsFromCSV(nume, prenume, cnp, nota, optiune, conn)) {
+                        totalInserted++;
+                    }
+                } catch (Exception e) {
+                    System.out.println("Eroare la procesarea rândului: " + line + ". Detalii: " + e.getMessage());
+                }
+            }
+
+            JOptionPane.showMessageDialog(this, totalInserted + " rânduri au fost importate cu succes!", "Succes", JOptionPane.INFORMATION_MESSAGE);
+        } catch (IOException e) {
+            throw new Exception("Eroare la citirea fișierului CSV: " + e.getMessage());
+        }
+    }
 
     // Getters for the fields if needed
     public String getNume() {

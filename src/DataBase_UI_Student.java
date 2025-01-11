@@ -1,12 +1,15 @@
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class DataBase_UI_Student extends JPanel {
     private static JLabel studentIdLabel;
-    private JTable resultsTable;
-    private DefaultTableModel tableModel;
+    private final JTable resultsTable;
+    private final DefaultTableModel tableModel;
 
 
     public DataBase_UI_Student() {
@@ -32,15 +35,15 @@ public class DataBase_UI_Student extends JPanel {
     public void updateStudentData() {
 
         String sql = """
-            SELECT 
-                s.idStudent AS "Student ID", 
-                f.Nume_Facultate AS "Facultate", 
-                a.status AS "Status" 
-            FROM admitere_status a
-            JOIN student s ON a.idStudent = s.idStudent
-            JOIN facultate f ON a.idFacultate = f.idFacultate
-            ORDER BY f.Nume_Facultate ASC, a.status ASC, s.idStudent ASC;
-        """;
+                    SELECT 
+                        s.idStudent AS "Student ID", 
+                        f.Nume_Facultate AS "Facultate", 
+                        a.status AS "Status" 
+                    FROM admitere_status a
+                    JOIN student s ON a.idStudent = s.idStudent
+                    JOIN facultate f ON a.idFacultate = f.idFacultate
+                    ORDER BY f.Nume_Facultate ASC, a.status ASC, s.idStudent ASC;
+                """;
 
         try (Connection conn = DatabaseManager.openConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql);
