@@ -1,0 +1,39 @@
+CREATE TABLE `admin` (
+  `idAdmin` int NOT NULL AUTO_INCREMENT,
+  `username` varchar(45) NOT NULL,
+  `password` varchar(45) NOT NULL,
+  `last_login` datetime DEFAULT NULL,
+  PRIMARY KEY (`idAdmin`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+
+CREATE TABLE `admitere_status` (
+  `idStudent` int NOT NULL,
+  `idFacultate` int NOT NULL,
+  `status` varchar(10) DEFAULT NULL,
+  PRIMARY KEY (`idStudent`,`idFacultate`),
+  KEY `idFacultate` (`idFacultate`),
+  CONSTRAINT `admitere_status_ibfk_1` FOREIGN KEY (`idStudent`) REFERENCES `student` (`idStudent`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `admitere_status_ibfk_2` FOREIGN KEY (`idFacultate`) REFERENCES `facultate` (`idFacultate`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `facultate` (
+  `idFacultate` int NOT NULL AUTO_INCREMENT,
+  `Nume_Facultate` varchar(45) DEFAULT NULL,
+  `Adresa` varchar(45) DEFAULT NULL,
+  `numar_locuri` int DEFAULT NULL,
+  PRIMARY KEY (`idFacultate`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+CREATE TABLE `student` (
+  `idStudent` int NOT NULL AUTO_INCREMENT,
+  `Nume` varchar(45) DEFAULT NULL,
+  `Prenume` varchar(45) DEFAULT NULL,
+  `CNP` varchar(45) DEFAULT NULL,
+  `nota` decimal(4,2) DEFAULT NULL,
+  `idFacultateOptiune` int DEFAULT NULL,
+  `Optiune` varchar(100) DEFAULT NULL,
+  PRIMARY KEY (`idStudent`),
+  KEY `idFacultate` (`idFacultateOptiune`),
+  CONSTRAINT `student_ibfk_1` FOREIGN KEY (`idFacultateOptiune`) REFERENCES `facultate` (`idFacultate`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
