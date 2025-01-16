@@ -90,8 +90,7 @@ public class DatabaseManager extends JOptionPane {
                     JOIN facultate f ON a.idFacultate = f.idFacultate
                     ORDER BY f.Nume_Facultate ASC,
                     a.status ASC;
-                """
-        ;
+                """;
 
         try {
             openConnection();
@@ -239,12 +238,13 @@ public class DatabaseManager extends JOptionPane {
     }
 
     /// Function to insert a student after CSV import
-    public static boolean insertStudentsFromCSV(String Nume, String Prenume, String CNP, float Nota, String Optiune, Connection conn) throws Exception {
+    public static boolean insertStudentsFromCSV(String Nume, String Prenume, String CNP, float Nota, String Optiune) throws Exception {
+        String baseSQL = "INSERT INTO STUDENT (Nume, Prenume, CNP, Nota, idFacultateOptiune, Optiune) VALUES (?, ?, ?, ?, ?, ?)";
+        Connection conn = openConnection();
         if (conn == null || conn.isClosed()) {
-            throw new Exception("Eroare: Conexiunea este închisă înainte de apelarea insertStudentsFromCSV.");
+            throw new Exception("Eroare: Conexiunea este închisă înainte de a afla idFacultate.");
         }
 
-        String baseSQL = "INSERT INTO STUDENT (Nume, Prenume, CNP, Nota, idFacultateOptiune, Optiune) VALUES (?, ?, ?, ?, ?, ?)";
         try {
             int idFacultateOptiune = getFacultateIdByName(conn, Optiune);
             if (idFacultateOptiune == 0) {
@@ -259,6 +259,10 @@ public class DatabaseManager extends JOptionPane {
                 pstmt.setInt(5, idFacultateOptiune);
                 pstmt.setString(6, Optiune);
 
+                if (conn == null || conn.isClosed()) {
+                    throw new Exception("Eroare: Conexiunea este închisă înainte de apelarea insertStudentsFromCSV.");
+                }
+
                 pstmt.executeUpdate();
 
                 ResultSet rs = pstmt.getGeneratedKeys();
@@ -266,6 +270,7 @@ public class DatabaseManager extends JOptionPane {
                     int generatedId = rs.getInt(1);
                     System.out.println("Studentul a fost inserat cu idStudent: " + generatedId);
                 }
+                conn.close();
                 return true;
             }
         } catch (SQLException ex) {
@@ -359,7 +364,6 @@ public class DatabaseManager extends JOptionPane {
     }
 
 
-
     /// Functie delete cu try-with-resources
     public static int deleteStudent(int id) {
         String sql = "DELETE FROM STUDENT WHERE idStudent=?";
@@ -408,25 +412,6 @@ public class DatabaseManager extends JOptionPane {
     }
 
 
-    /// Compară opțiunea completată pentru inserare cu tabelul Facultate. Returnează adevărat dacă există un rând returnat.
-    public static boolean compareOptiuneFacultate(String optiune) {
-        String sql = "SELECT Nume_Facultate FROM Facultate WHERE Nume_Facultate = ?";
-        try (Connection conn = openConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, optiune.trim());
-            ResultSet rs = pstmt.executeQuery();
-            if (rs.next()) {
-                return true; // Found a match
-            } else {
-                System.out.println("Opțiunea nu a fost găsită în tabelul Facultate: '" + optiune + "'");
-            }
-        } catch (SQLException ex) {
-            System.out.println("Eroare compareOptiuneFacultate: " + ex.getMessage());
-        }
-        return false; // No match or error occurred
-    }
-
-
     /// Funcție pentru obținerea automată a ID-ului la introducere.
     public static int getFacultateIdByName(String facultateName) {
         String sql = "SELECT idFacultate FROM facultate WHERE Nume_Facultate = ?";
@@ -460,6 +445,21 @@ public class DatabaseManager extends JOptionPane {
             System.out.println("Eroare getFacultateIdByName: " + ex.getMessage());
         }
         return 0; // Return 0 if not found
+    }
+
+    public static int getNumarLocuri(String facultateName) {
+        String sql = "SELECT COUNT(*) AS nr_locuri FROM Student WHERE Optiune = ?";
+        try (Connection conn = openConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql);) {
+            pstmt.setString(1, facultateName);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("nr_locuri");
+            }
+        } catch (SQLException ex) {
+            System.out.println("Eroare getNumarLocuri: " + ex.getMessage());
+        }
+        return 0;
     }
 
 

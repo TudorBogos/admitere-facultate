@@ -5,6 +5,7 @@
       <root url="file://$PROJECT_DIR$/libs/iText-Core-9.0.0" />
       <root url="jar://$PROJECT_DIR$/libs/slf4j-jdk14-2.0.16.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/slf4j-api-2.0.16.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/jfreechart-1.0.19-demo.jar!/" />
     </CLASSES>
     <JAVADOC>
       <root url="jar://$PROJECT_DIR$/libs/iText-Core-9.0.0/barcodes-9.0.0-javadoc.jar!/" />

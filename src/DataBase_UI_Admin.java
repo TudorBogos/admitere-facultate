@@ -11,12 +11,10 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.sql.Connection;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 
 public class DataBase_UI_Admin extends JPanel {
@@ -115,11 +113,13 @@ public class DataBase_UI_Admin extends JPanel {
         JPanel rightButtonPanel = new JPanel(new FlowLayout());
         JButton exportToCSVButton = new JButton("Export to Excel tabela de mai jos");
         JButton exportToPDFButton = new JButton("Export to PDF tabela de mai jos");
+        JButton renderGraphButton = new JButton("Afisati graph tabela de mai jos pentru o anumita facultate");
 
         rightButtonPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 0, 0));
 
         rightButtonPanel.add(exportToCSVButton);
         rightButtonPanel.add(exportToPDFButton);
+        rightButtonPanel.add(renderGraphButton);
 
         // Admitere_Status Table setup
         String[] admitereStatusColumnNames = {"Student", "Facultate", "Status"};
@@ -306,6 +306,7 @@ public class DataBase_UI_Admin extends JPanel {
         /// Buton import CSV tabela Student
         importCSVButton.addActionListener(e -> {
             JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setCurrentDirectory(new File("C:/Proiecte"));
             int result = fileChooser.showOpenDialog(this);
 
             if (result == JFileChooser.APPROVE_OPTION) {
@@ -334,6 +335,44 @@ public class DataBase_UI_Admin extends JPanel {
             clearFields();
         });
 
+        /// Buton graph tabel Admitere Student
+        renderGraphButton.addActionListener(e -> {
+            try {
+                String tipFacultate = JOptionPane.showInputDialog(
+                        this,
+                        "Introduceti numele facultatii:",
+                        "Facultate",
+                        JOptionPane.QUESTION_MESSAGE
+                );
+
+                if (tipFacultate == null || tipFacultate.trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Numele facultatii nu poate fi gol.", "Eroare", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                int nrLocuri = DatabaseManager.getNumarLocuri(tipFacultate);
+                int idFacultate = DatabaseManager.getFacultateIdByName(tipFacultate);
+
+                if (idFacultate == 0) {
+                    JOptionPane.showMessageDialog(this, "Nu exista aceasta facultate", "Eroare", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    int nrStudenti_Admisi = countAdmittedByFaculty(tipFacultate);
+
+                    System.out.println("Facultate: " + tipFacultate + ", Admis: " + nrStudenti_Admisi + ", Locuri: " + nrLocuri);
+
+                    SwingUtilities.invokeLater(() -> {
+                        JFrame chartFrame = new JFrame("Statistici Admitere - " + tipFacultate);
+                        chartFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                        chartFrame.setSize(500, 400);
+                        chartFrame.add(new AdmitereChart(nrStudenti_Admisi, nrLocuri));
+                        chartFrame.setVisible(true);
+                    });
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "A aparut o eroare: " + ex.getMessage(), "Eroare", JOptionPane.ERROR_MESSAGE);
+            }
+        });
 
 
         clearButton.addActionListener(e -> clearFields());
@@ -431,6 +470,32 @@ public class DataBase_UI_Admin extends JPanel {
                     "Eroare",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /// Functie pentru a numara studentii admisi din model.
+    public int countAdmittedByFaculty(String facultyName) {
+        int count = 0;
+
+        // Identify the column indices for "Status" and "Facultate"
+        int statusColumn = tableModelAdmitereStatus.findColumn("Status");
+        int facultyColumn = tableModelAdmitereStatus.findColumn("Facultate");
+
+        if (statusColumn == -1 || facultyColumn == -1) {
+            throw new IllegalArgumentException("TableModel must contain 'Status' and 'Facultate' columns.");
+        }
+
+        // Iterate through the rows of the table
+        for (int row = 0; row < tableModelAdmitereStatus.getRowCount(); row++) {
+            String status = tableModelAdmitereStatus.getValueAt(row, statusColumn).toString();
+            String faculty = tableModelAdmitereStatus.getValueAt(row, facultyColumn).toString();
+
+            // Check if the row matches the criteria
+            if ("admis".equalsIgnoreCase(status) && facultyName.equalsIgnoreCase(faculty)) {
+                count++;
+            }
+        }
+
+        return count;
     }
 
 
@@ -578,7 +643,7 @@ public class DataBase_UI_Admin extends JPanel {
         if (optiuneText.isEmpty()) {
             return "";
         }
-        if (DatabaseManager.compareOptiuneFacultate(optiuneText)) {
+        if (DatabaseManager.getFacultateIdByName(optiuneText)!=0) {
             return optiuneText;
         } else {
             throw new Exception("Facultatea introdusa nu exista in lista de facultati.");
@@ -591,7 +656,7 @@ public class DataBase_UI_Admin extends JPanel {
             throw new Exception("Opțiunea nu poate fi goală.");
         }
         optiuneText = optiuneText.trim();
-        if (DatabaseManager.compareOptiuneFacultate(optiuneText)) {
+        if (DatabaseManager.getFacultateIdByName(optiuneText)!=0) {
             return optiuneText;
         } else {
             throw new Exception("Facultatea introdusă nu există în lista de facultăți.");
@@ -707,7 +772,7 @@ public class DataBase_UI_Admin extends JPanel {
     public void importCSVToTableModel(String filePath) throws Exception {
         int totalInserted = 0;
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            Connection conn=DatabaseManager.openConnection();
+            Connection conn = DatabaseManager.openConnection();
 
             // Validare antet coloane
             String headerLine = br.readLine();
@@ -747,7 +812,7 @@ public class DataBase_UI_Admin extends JPanel {
                     String optiune = validOptiune(values[4].trim());
 
                     // Apelează funcția de inserare
-                    if (DatabaseManager.insertStudentsFromCSV(nume, prenume, cnp, nota, optiune, conn)) {
+                    if (DatabaseManager.insertStudentsFromCSV(nume, prenume, cnp, nota, optiune)) {
                         totalInserted++;
                     }
                 } catch (Exception e) {
