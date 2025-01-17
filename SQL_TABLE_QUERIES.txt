@@ -37,3 +37,15 @@ CREATE TABLE `student` (
   KEY `idFacultate` (`idFacultateOptiune`),
   CONSTRAINT `student_ibfk_1` FOREIGN KEY (`idFacultateOptiune`) REFERENCES `facultate` (`idFacultate`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+
+DELIMITER $$
+
+CREATE TRIGGER admitere_facultate
+AFTER INSERT ON Student
+FOR EACH ROW
+BEGIN
+    INSERT INTO admitere_status (idStudent, idFacultate, status)
+    VALUES (NEW.idStudent, NEW.idFacultateOptiune, 'pending');
+END$$
+
+DELIMITER ;
