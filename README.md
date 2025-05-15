@@ -82,4 +82,4 @@ Aplicația este împărțită în două panouri:
 
 ## TL;DR
 
-Aplicație Java pentru admitere la facultate, cu două roluri (Admin + Student), interfață Swing, baze de date MySQL, import/export CSV, export PDF și grafic de tip pie chart. Ușor de extins, clar structurat, good job!
+Aplicație Java pentru admitere la facultate, cu două roluri (Admin + Student), interfață Swing, baze de date MySQL, import/export CSV, export PDF și grafic de tip pie chart.
