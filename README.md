@@ -14,11 +14,13 @@ Aceasta este o aplicație desktop Java care gestionează procesul de admitere la
 ## 🧠 Funcționalități principale
 
 ### Student
+
 - Autentificare pe baza datelor personale (Nume, Prenume, CNP)
 - Vizualizare status (admis / respins)
 - Vizualizare detalii despre opțiunea aleasă
 
 ### Admin
+
 - Autentificare cu username și parolă
 - Inserare / modificare / ștergere candidați
 - Import / export de date (CSV și PDF)
@@ -28,6 +30,7 @@ Aceasta este o aplicație desktop Java care gestionează procesul de admitere la
 ## 🧱 Structura bazei de date
 
 ### Tabele principale
+
 - `student(idStudent, Nume, Prenume, CNP, Nota, idFacultateOptiune, Optiune)`
 - `facultate(idFacultate, Nume_Facultate, Adresa, numar_locuri)`
 - `admitere_status(idStudent, idFacultate, status)`
@@ -38,6 +41,7 @@ Include relații și chei externe pentru integritate referențială.
 ## 🖼️ Interfață
 
 Aplicația este împărțită în două panouri:
+
 - **AuthenticationPanel** – logarea utilizatorilor
 - **DataBase_UI_Admin** și **DataBase_UI_Student** – interfețe dedicate fiecărui rol
 
@@ -57,7 +61,7 @@ Aplicația este împărțită în două panouri:
 
 1. Asigură-te că ai Java și MySQL instalate.
 2. Creează baza de date folosind scripturile din documentație.
-3. Adaugă driverul `mysql-connector-j` în classpath.
+3. Adaugă driverul `mysql-connector-j` în classpath (din libs).
 4. Rulează aplicația dintr-un IDE (NetBeans, IntelliJ etc.).
 5. Loghează-te ca Admin sau Student.
 
