@@ -76,7 +76,6 @@ Aplicația este împărțită în două panouri:
 - [Java Swing – Oracle Docs](https://docs.oracle.com/javase/7/docs/api/javax/swing/)
 - [GFG – Java Swing](https://www.geeksforgeeks.org/introduction-to-java-swing/)
 - [W3Schools Java](https://www.w3schools.com/java/)
-- ChatGPT 😄
 
 ---
 
